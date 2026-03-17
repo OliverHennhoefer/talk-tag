@@ -1,6 +1,5 @@
-def main():
-    print("Hello from chatterbox!")
-
+﻿from talk_tag.cli import app
 
 if __name__ == "__main__":
-    main()
+    app()
+
