@@ -3,7 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from talk_tag.config import RunConfig
-from talk_tag.formats.common import process_speaker_prefixed_line, validate_participants_header
+from talk_tag.formats.common import (
+    process_speaker_prefixed_line,
+    validate_participants_header,
+)
 from talk_tag.json_utils import dumps
 from talk_tag.models import FileResult
 from talk_tag.progress import wrap_progress
@@ -73,7 +76,9 @@ def process_csv_file(
         else:
             tt_annotated_text.append(line_result.annotated_text)
             tt_annotations.append(
-                _serialize_annotations([item.to_dict() for item in line_result.annotations])
+                _serialize_annotations(
+                    [item.to_dict() for item in line_result.annotations]
+                )
             )
             tt_line_confidence.append(line_result.line_confidence)
         tt_is_target_line.append(processed.is_target_line)

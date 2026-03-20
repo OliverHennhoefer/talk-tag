@@ -3,7 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from talk_tag.config import RunConfig
-from talk_tag.formats.common import process_speaker_prefixed_line, validate_participants_header
+from talk_tag.formats.common import (
+    process_speaker_prefixed_line,
+    validate_participants_header,
+)
 from talk_tag.models import FileResult
 from talk_tag.progress import wrap_progress
 

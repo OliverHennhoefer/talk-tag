@@ -30,7 +30,9 @@ def process_jsonl_file(
     )
     for line_number, raw_line in enumerate(iterator, start=1):
         if not raw_line.strip():
-            raise ValueError(f"{input_path}:{line_number}: blank JSONL lines are invalid.")
+            raise ValueError(
+                f"{input_path}:{line_number}: blank JSONL lines are invalid."
+            )
 
         payload = loads(raw_line)
         if not isinstance(payload, dict):
@@ -57,7 +59,7 @@ def process_jsonl_file(
                 show_target=config.show_target,
             )
             target_lines += 1
-            if line_result.annotations:
+            if line_result.annotated_text != text:
                 annotated_lines += 1
         else:
             line_result = passthrough_result(text, is_target_line=False)

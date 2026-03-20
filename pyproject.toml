@@ -4,25 +4,49 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "talk-tag"
-version = "0.1.0"
-description = "GPU-only transcript annotator for speaker-scoped CHAT corpus correction"
+version = "0.2.0"
+description = "Transcript annotator for speaker-scoped CHAT corpus correction"
 readme = "README.md"
-requires-python = ">=3.13"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+keywords = ["chat", "transcript", "annotation", "linguistics", "nlp"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Text Processing :: Linguistic",
+]
 dependencies = [
     "huggingface_hub>=0.29.3",
     "openpyxl>=3.1.5",
     "orjson>=3.10.15",
     "pandas>=2.2.3",
-    "torch>=2.7.0",
-    "transformers>=4.52.0",
     "tqdm>=4.67.1",
 ]
 
 [project.optional-dependencies]
+runtime = [
+    "numpy>=2.0.0",
+    "peft>=0.12.0",
+    "torch>=2.7.0",
+    "transformers>=4.52.0",
+]
 dev = ["pytest>=8.3.5"]
 
 [project.scripts]
 "talk-tag" = "talk_tag.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/OliverHennhoefer/talk-tag"
+Repository = "https://github.com/OliverHennhoefer/talk-tag"
+Issues = "https://github.com/OliverHennhoefer/talk-tag/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -36,3 +60,17 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 addopts = "-q"
+testpaths = ["tests"]
+norecursedirs = [
+    ".git",
+    ".venv",
+    ".pytest_cache",
+    ".pytest_tmp*",
+    ".pytest_basetemp*",
+    ".talk-tag-cache",
+    ".test_workspace",
+    "build",
+    "dist",
+    "pytest-temp-root",
+    "pytest-cache-files-*",
+]

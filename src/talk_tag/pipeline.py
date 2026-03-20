@@ -7,11 +7,7 @@ from typing import Protocol
 
 from talk_tag.config import RunConfig
 from talk_tag.formats.cha import process_cha_file
-from talk_tag.formats.csv import process_csv_file
-from talk_tag.formats.json import process_json_file
 from talk_tag.formats.jsonl import process_jsonl_file
-from talk_tag.formats.txt import process_txt_file
-from talk_tag.formats.xlsx import process_xlsx_file
 from talk_tag.models import FileResult, LineResult, RunSummary
 from talk_tag.progress import wrap_progress
 from talk_tag.reporting import build_summary, write_run_report
@@ -25,35 +21,49 @@ class AnnotationEngine(Protocol):
         granularity: str,
         error_tags: list[str],
         show_target: bool,
-    ) -> LineResult:
-        ...
+    ) -> LineResult: ...
 
 
 FormatHandler = Callable[[Path, Path, RunConfig, AnnotationEngine], FileResult]
 
 HANDLERS: dict[str, FormatHandler] = {
     ".cha": process_cha_file,
-    ".txt": process_txt_file,
-    ".csv": process_csv_file,
-    ".json": process_json_file,
     ".jsonl": process_jsonl_file,
-    ".xlsx": process_xlsx_file,
 }
 
+LEGACY_UNSUPPORTED_SUFFIXES: frozenset[str] = frozenset(
+    {".txt", ".csv", ".json", ".xlsx"}
+)
 
-def _discover_files(input_dir: Path) -> list[Path]:
+
+def _discover_files(input_dir: Path) -> tuple[list[Path], list[Path]]:
     files: list[Path] = []
+    unsupported: list[Path] = []
     for path in input_dir.rglob("*"):
-        if path.is_file() and path.suffix.lower() in HANDLERS:
+        if not path.is_file():
+            continue
+        suffix = path.suffix.lower()
+        if suffix in HANDLERS:
             files.append(path)
-    return sorted(files)
+        elif suffix in LEGACY_UNSUPPORTED_SUFFIXES:
+            unsupported.append(path)
+    return sorted(files), sorted(unsupported)
 
 
 def run_pipeline(*, config: RunConfig, engine: AnnotationEngine) -> RunSummary:
     config.output_dir.mkdir(parents=True, exist_ok=True)
     started_at = datetime.now(timezone.utc).isoformat()
 
-    files = _discover_files(config.input_dir)
+    files, unsupported = _discover_files(config.input_dir)
+    if unsupported:
+        examples = ", ".join(
+            str(path.relative_to(config.input_dir)) for path in unsupported[:3]
+        )
+        count_msg = f" ({len(unsupported)} total)" if len(unsupported) > 3 else ""
+        raise ValueError(
+            "Unsupported input format(s) detected. Only .cha and .jsonl are supported "
+            f"in adapter-only deployment. Example path(s): {examples}{count_msg}"
+        )
     file_results: list[FileResult] = []
 
     file_iter = wrap_progress(

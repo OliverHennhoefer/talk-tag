@@ -22,7 +22,9 @@ def process_xlsx_file(
     try:
         import pandas as pd
     except ImportError as exc:  # pragma: no cover - exercised without dependency
-        raise RuntimeError("pandas and openpyxl are required for XLSX processing.") from exc
+        raise RuntimeError(
+            "pandas and openpyxl are required for XLSX processing."
+        ) from exc
 
     speaker_field, text_field = config.require_structured_fields(input_path)
     frame = pd.read_excel(input_path, dtype=str)

@@ -95,7 +95,9 @@ def validate_participants_header(lines: list[str], config: RunConfig) -> list[st
     if not participants_line:
         if config.investigator_speaker is None:
             return []
-        return ["Missing @Participants header; could not validate investigator speaker."]
+        return [
+            "Missing @Participants header; could not validate investigator speaker."
+        ]
 
     match = PARTICIPANTS_LINE_RE.match(participants_line)
     if not match:
@@ -165,6 +167,6 @@ def process_speaker_prefixed_line(
     return ProcessedTextLine(
         output_line=rebuilt_line,
         is_target_line=True,
-        was_annotated=bool(line_result.annotations),
+        was_annotated=line_result.annotated_text != body,
         line_result=line_result,
     )
