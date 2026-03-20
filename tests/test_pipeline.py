@@ -179,7 +179,9 @@ def test_unsupported_legacy_format_fails_with_clear_error(case_root: Path) -> No
         )
 
 
-def test_unsupported_legacy_format_reports_total_count_when_many(case_root: Path) -> None:
+def test_unsupported_legacy_format_reports_total_count_when_many(
+    case_root: Path,
+) -> None:
     input_dir = case_root / "in"
     output_dir = case_root / "out"
     input_dir.mkdir()
