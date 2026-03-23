@@ -207,3 +207,6 @@ def test_chat_tokens_loaded_from_json() -> None:
     tokens = load_chat_tokens()
     assert isinstance(tokens, list)
     assert tokens
+    assert len(tokens) == 53
+    assert "[* m]" in tokens
+    assert "&+" in tokens
