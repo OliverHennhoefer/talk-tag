@@ -1,4 +1,4 @@
-from talk_tag.api import StartupContext, annotate_folder, pull_model
+from talk_tag.api import StartupContext, annotate_folder, annotate_path, pull_model
 from talk_tag.inference import (
     InferenceConfig,
     TalkTagInference,
@@ -7,6 +7,7 @@ from talk_tag.inference import (
 
 __all__ = [
     "annotate_folder",
+    "annotate_path",
     "pull_model",
     "StartupContext",
     "InferenceConfig",

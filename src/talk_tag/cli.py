@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-from talk_tag.api import StartupContext, annotate_folder, pull_model
+from talk_tag.api import StartupContext, annotate_path, pull_model
 from talk_tag.doctor import run_doctor
 
 
@@ -45,9 +45,11 @@ def _build_parser() -> argparse.ArgumentParser:
 
     annotate = subparsers.add_parser(
         "annotate",
-        help="Annotate .cha and .jsonl files in a folder",
+        help="Annotate a single .cha/.jsonl file or all supported files in a folder",
     )
-    annotate.add_argument("--input-dir", required=True, type=Path)
+    input_group = annotate.add_mutually_exclusive_group(required=True)
+    input_group.add_argument("--input-dir", type=Path)
+    input_group.add_argument("--input-path", type=Path)
     annotate.add_argument("--output-dir", required=True, type=Path)
     annotate.add_argument("--target-speaker", required=True)
     annotate.add_argument("--investigator-speaker", default=None)
@@ -118,8 +120,9 @@ def _print_startup_context(context: StartupContext) -> None:
 
 def _run_annotate(args: argparse.Namespace) -> int:
     try:
-        summary = annotate_folder(
-            input_dir=args.input_dir,
+        input_path = args.input_path if args.input_path is not None else args.input_dir
+        summary = annotate_path(
+            input_path=input_path,
             output_dir=args.output_dir,
             target_speaker=args.target_speaker,
             investigator_speaker=args.investigator_speaker,

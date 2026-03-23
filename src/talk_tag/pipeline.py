@@ -36,10 +36,20 @@ LEGACY_UNSUPPORTED_SUFFIXES: frozenset[str] = frozenset(
 )
 
 
-def _discover_files(input_dir: Path) -> tuple[list[Path], list[Path]]:
+def _discover_files(input_path: Path) -> tuple[list[Path], list[Path], Path]:
     files: list[Path] = []
     unsupported: list[Path] = []
-    for path in input_dir.rglob("*"):
+    if input_path.is_file():
+        suffix = input_path.suffix.lower()
+        if suffix in HANDLERS:
+            files.append(input_path)
+        elif suffix in LEGACY_UNSUPPORTED_SUFFIXES:
+            unsupported.append(input_path)
+        else:
+            unsupported.append(input_path)
+        return sorted(files), sorted(unsupported), input_path.parent
+
+    for path in input_path.rglob("*"):
         if not path.is_file():
             continue
         suffix = path.suffix.lower()
@@ -47,17 +57,17 @@ def _discover_files(input_dir: Path) -> tuple[list[Path], list[Path]]:
             files.append(path)
         elif suffix in LEGACY_UNSUPPORTED_SUFFIXES:
             unsupported.append(path)
-    return sorted(files), sorted(unsupported)
+    return sorted(files), sorted(unsupported), input_path
 
 
 def run_pipeline(*, config: RunConfig, engine: AnnotationEngine) -> RunSummary:
     config.output_dir.mkdir(parents=True, exist_ok=True)
     started_at = datetime.now(timezone.utc).isoformat()
 
-    files, unsupported = _discover_files(config.input_dir)
+    files, unsupported, base_input_dir = _discover_files(config.input_path)
     if unsupported:
         examples = ", ".join(
-            str(path.relative_to(config.input_dir)) for path in unsupported[:3]
+            str(path.relative_to(base_input_dir)) for path in unsupported[:3]
         )
         count_msg = f" ({len(unsupported)} total)" if len(unsupported) > 3 else ""
         raise ValueError(
@@ -73,7 +83,8 @@ def run_pipeline(*, config: RunConfig, engine: AnnotationEngine) -> RunSummary:
         desc="Files",
     )
     for input_path in file_iter:
-        output_path = config.output_dir / input_path.relative_to(config.input_dir)
+        relative_path = input_path.relative_to(base_input_dir)
+        output_path = config.output_dir / relative_path
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         handler = HANDLERS[input_path.suffix.lower()]
@@ -95,7 +106,7 @@ def run_pipeline(*, config: RunConfig, engine: AnnotationEngine) -> RunSummary:
 
     ended_at = datetime.now(timezone.utc).isoformat()
     summary = build_summary(
-        input_dir=config.input_dir,
+        input_dir=config.input_path,
         output_dir=config.output_dir,
         started_at=started_at,
         ended_at=ended_at,

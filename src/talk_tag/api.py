@@ -156,8 +156,8 @@ def pull_model(
     )
 
 
-def annotate_folder(
-    input_dir: str | Path,
+def annotate_path(
+    input_path: str | Path,
     output_dir: str | Path,
     target_speaker: str,
     *,
@@ -183,7 +183,7 @@ def annotate_folder(
     engine: AnnotationEngine | None = None,
     startup_callback: Callable[[StartupContext], None] | None = None,
 ) -> RunSummary:
-    """Run folder annotation using either an internal or caller-supplied engine.
+    """Run annotation over a single file or a folder.
 
     If ``engine`` is provided, startup metadata reports ``backend="external"`` and
     ``model_source="external_engine"`` because talk-tag did not resolve/load the
@@ -191,7 +191,7 @@ def annotate_folder(
     """
 
     config = RunConfig(
-        input_dir=Path(input_dir),
+        input_path=Path(input_path),
         output_dir=Path(output_dir),
         target_speaker=target_speaker,
         investigator_speaker=investigator_speaker,
@@ -236,3 +236,60 @@ def annotate_folder(
             )
 
     return run_pipeline(config=config, engine=active_engine)
+
+
+def annotate_folder(
+    input_dir: str | Path,
+    output_dir: str | Path,
+    target_speaker: str,
+    *,
+    investigator_speaker: str | None = None,
+    device: Device = "auto",
+    hf_repo_id: str | None = None,
+    hf_filename: str | None = None,
+    hf_token: str | None = None,
+    hf_cache_dir: str | Path | None = None,
+    expert_model_id: str | None = None,
+    expert_model_path: str | Path | None = None,
+    expert_model_revision: str | None = None,
+    expert_model_token: str | None = None,
+    granularity: Granularity = "standard",
+    error_tags: list[str] | None = None,
+    show_target: bool = False,
+    speaker_field: str | None = None,
+    text_field: str | None = None,
+    csv_line_field: str | None = None,
+    case_insensitive_speaker: bool = False,
+    continue_on_error: bool = True,
+    show_progress: bool = True,
+    engine: AnnotationEngine | None = None,
+    startup_callback: Callable[[StartupContext], None] | None = None,
+) -> RunSummary:
+    """Backward-compatible wrapper for the legacy folder-oriented API."""
+
+    return annotate_path(
+        input_path=input_dir,
+        output_dir=output_dir,
+        target_speaker=target_speaker,
+        investigator_speaker=investigator_speaker,
+        device=device,
+        hf_repo_id=hf_repo_id,
+        hf_filename=hf_filename,
+        hf_token=hf_token,
+        hf_cache_dir=hf_cache_dir,
+        expert_model_id=expert_model_id,
+        expert_model_path=expert_model_path,
+        expert_model_revision=expert_model_revision,
+        expert_model_token=expert_model_token,
+        granularity=granularity,
+        error_tags=error_tags,
+        show_target=show_target,
+        speaker_field=speaker_field,
+        text_field=text_field,
+        csv_line_field=csv_line_field,
+        case_insensitive_speaker=case_insensitive_speaker,
+        continue_on_error=continue_on_error,
+        show_progress=show_progress,
+        engine=engine,
+        startup_callback=startup_callback,
+    )

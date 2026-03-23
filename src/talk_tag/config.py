@@ -51,7 +51,7 @@ def validate_fixed_deployment_model_source(
 
 @dataclass(slots=True)
 class RunConfig:
-    input_dir: Path
+    input_path: Path
     output_dir: Path
     target_speaker: str
     investigator_speaker: str | None = None
@@ -75,7 +75,7 @@ class RunConfig:
     show_progress: bool = True
 
     def __post_init__(self) -> None:
-        self.input_dir = Path(self.input_dir).resolve()
+        self.input_path = Path(self.input_path).resolve()
         self.output_dir = Path(self.output_dir).resolve()
         if self.hf_cache_dir is not None:
             self.hf_cache_dir = Path(self.hf_cache_dir).resolve()
@@ -93,16 +93,20 @@ class RunConfig:
             self._validate_model_source()
 
     def _validate_io_paths(self) -> None:
-        if not self.input_dir.exists():
-            raise FileNotFoundError(f"Input directory does not exist: {self.input_dir}")
-        if not self.input_dir.is_dir():
-            raise NotADirectoryError(f"Input path is not a directory: {self.input_dir}")
-        if self.input_dir == self.output_dir:
-            raise ValueError("input_dir and output_dir must be different directories.")
-        if self.output_dir.is_relative_to(self.input_dir):
-            raise ValueError("output_dir must not be nested under input_dir.")
-        if self.input_dir.is_relative_to(self.output_dir):
-            raise ValueError("output_dir must not be a parent of input_dir.")
+        if not self.input_path.exists():
+            raise FileNotFoundError(f"Input path does not exist: {self.input_path}")
+        if not (self.input_path.is_dir() or self.input_path.is_file()):
+            raise ValueError(f"Input path must be a file or directory: {self.input_path}")
+        if self.input_path == self.output_dir:
+            raise ValueError("input_path and output_dir must be different paths.")
+        if self.input_path.is_dir():
+            if self.output_dir.is_relative_to(self.input_path):
+                raise ValueError("output_dir must not be nested under input_path.")
+            if self.input_path.is_relative_to(self.output_dir):
+                raise ValueError("output_dir must not be a parent of input_path.")
+        else:
+            if self.output_dir == self.input_path.parent:
+                raise ValueError("output_dir must not be the parent directory of input_path.")
 
     def _validate_target_speaker(self) -> None:
         if not TARGET_SPEAKER_RE.match(self.target_speaker):

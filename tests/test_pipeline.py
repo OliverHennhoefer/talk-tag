@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from talk_tag.api import annotate_folder
+from talk_tag.api import annotate_folder, annotate_path
 from talk_tag.config import RunConfig
 from talk_tag.model.deployment_loader import load_chat_tokens
 from talk_tag.models import Annotation, LineResult
@@ -58,7 +58,7 @@ def test_target_speaker_accepts_flexible_code(case_root: Path) -> None:
     input_dir.mkdir()
 
     config = RunConfig(
-        input_dir=input_dir,
+        input_path=input_dir,
         output_dir=output_dir,
         target_speaker="*SUBJ1",
     )
@@ -71,7 +71,7 @@ def test_target_speaker_rejects_invalid_code(case_root: Path) -> None:
     input_dir.mkdir()
 
     config = RunConfig(
-        input_dir=input_dir,
+        input_path=input_dir,
         output_dir=output_dir,
         target_speaker="*bad",
     )
@@ -84,7 +84,7 @@ def test_output_dir_overlap_is_rejected(case_root: Path) -> None:
     output_dir = input_dir / "nested"
     input_dir.mkdir(parents=True)
     config = RunConfig(
-        input_dir=input_dir,
+        input_path=input_dir,
         output_dir=output_dir,
         target_speaker="*CHI",
     )
@@ -134,6 +134,26 @@ def test_only_target_speaker_is_annotated_in_cha(case_root: Path) -> None:
     assert output_lines[1] == "*INV:\tbad two"
 
 
+def test_single_cha_file_is_supported(case_root: Path) -> None:
+    input_file = case_root / "sample.cha"
+    output_dir = case_root / "out"
+    input_file.write_text(
+        "*CHI:\tbad one\n*INV:\tbad two\n",
+        encoding="utf-8",
+    )
+
+    annotate_path(
+        input_path=input_file,
+        output_dir=output_dir,
+        target_speaker="*CHI",
+        show_target=True,
+        engine=StubEngine(),
+    )
+    output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
+    assert output_lines[0] == "*CHI:\tbad [:: good] one"
+    assert output_lines[1] == "*INV:\tbad two"
+
+
 def test_jsonl_uses_tt_fields(case_root: Path) -> None:
     input_dir = case_root / "in"
     output_dir = case_root / "out"
@@ -146,6 +166,32 @@ def test_jsonl_uses_tt_fields(case_root: Path) -> None:
 
     annotate_folder(
         input_dir=input_dir,
+        output_dir=output_dir,
+        target_speaker="*CHI",
+        speaker_field="speaker",
+        text_field="utterance",
+        show_target=True,
+        engine=StubEngine(),
+    )
+
+    payload = (output_dir / "records.jsonl").read_text(encoding="utf-8")
+    assert "tt_annotated_text" in payload
+    assert "tt_annotations" in payload
+    assert "tt_line_confidence" in payload
+    assert "tt_is_target_line" in payload
+
+
+def test_single_jsonl_file_is_supported(case_root: Path) -> None:
+    input_file = case_root / "records.jsonl"
+    output_dir = case_root / "out"
+    input_file.write_text(
+        '{"speaker":"*CHI","utterance":"bad text"}\n'
+        '{"speaker":"*INV","utterance":"bad text"}\n',
+        encoding="utf-8",
+    )
+
+    annotate_path(
+        input_path=input_file,
         output_dir=output_dir,
         target_speaker="*CHI",
         speaker_field="speaker",

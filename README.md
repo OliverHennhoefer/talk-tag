@@ -58,6 +58,16 @@ talk-tag annotate \
   --device auto
 ```
 
+Single-file `.cha` example:
+
+```bash
+talk-tag annotate \
+  --input-path ./input/sample.cha \
+  --output-dir ./output \
+  --target-speaker "*CHI" \
+  --device auto
+```
+
 ## Inference defaults
 
 - `batch_size = 4`
@@ -71,6 +81,11 @@ talk-tag annotate \
 
 - `.cha`
 - `.jsonl` (requires `--speaker-field` and `--text-field`)
+
+The `annotate` command accepts either:
+
+- `--input-dir` for folder annotation
+- `--input-path` for a single `.cha` or `.jsonl` file
 
 Other previously supported formats (`.txt`, `.csv`, `.json`, `.xlsx`) are rejected in adapter-only deployment mode.
 
