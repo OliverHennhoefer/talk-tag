@@ -5,9 +5,13 @@ Adapter-only TalkBank CHAT morphosyntactic error annotator for `.cha` and `.json
 The runtime deployment path is fixed to:
 
 1. Base model: `unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit`
-2. Adapter: `mash-mash/Llama_TalkTag_CHAT_error_annotator_adapter`
+2. Adapter: `mash-mash/talkbank-morphosyntax-annotator-final-recon_full_comp_preserve_final_seed3407`
 
 No merged-model runtime path is used.
+
+The package bundles the deployed CHAT token augmentation list and injects those
+tokens into the tokenizer before loading the PEFT adapter. This step is required
+to keep the tokenizer/model vocabulary aligned with the adapter checkpoint.
 
 ## Install
 
