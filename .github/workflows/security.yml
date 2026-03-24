@@ -45,7 +45,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
+      - id: dependency_review
+        uses: actions/dependency-review-action@v4
+        continue-on-error: true
+
+      - name: Dependency review unavailable notice
+        if: steps.dependency_review.outcome == 'failure'
+        run: |
+          echo "::warning::Dependency Review is not enabled for this repository. Enable Dependency graph and GitHub Advanced Security at settings/security_analysis to enforce this check."
 
   dependency-audit:
     if: github.event_name != 'pull_request'
