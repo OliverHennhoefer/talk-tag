@@ -1,0 +1,46 @@
+site_name: talk-tag
+site_description: Adapter-only TalkBank CHAT morphosyntactic error annotator.
+site_url: https://oliverhennhoefer.github.io/talk-tag/
+repo_url: https://github.com/OliverHennhoefer/talk-tag
+repo_name: OliverHennhoefer/talk-tag
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.top
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - src
+          options:
+            show_source: false
+            show_root_heading: true
+            show_if_no_docstring: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Overview: index.md
+  - Installation: installation.md
+  - CLI Usage: cli.md
+  - Input and Output: input-output.md
+  - Runtime and Auth: runtime.md
+  - Troubleshooting: troubleshooting.md
+  - API Reference: api.md
+  - Governance: governance.md
+

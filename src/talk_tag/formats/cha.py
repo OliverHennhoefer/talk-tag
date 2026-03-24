@@ -4,6 +4,7 @@ from pathlib import Path
 
 from talk_tag.config import RunConfig
 from talk_tag.formats.common import (
+    AnnotationEngine,
     process_speaker_prefixed_line,
     validate_participants_header,
 )
@@ -15,7 +16,7 @@ def process_cha_file(
     input_path: Path,
     output_path: Path,
     config: RunConfig,
-    engine: object,
+    engine: AnnotationEngine,
 ) -> FileResult:
     with input_path.open("r", encoding="utf-8", newline="") as handle:
         lines = handle.readlines()

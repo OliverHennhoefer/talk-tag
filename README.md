@@ -1,54 +1,60 @@
 # talk-tag
 
-Adapter-only TalkBank CHAT morphosyntactic error annotator for `.cha` and `.jsonl`.
+[![PyPI](https://img.shields.io/pypi/v/talk-tag.svg)](https://pypi.org/project/talk-tag/)
+[![Python](https://img.shields.io/pypi/pyversions/talk-tag.svg)](https://pypi.org/project/talk-tag/)
+[![License](https://img.shields.io/pypi/l/talk-tag.svg)](LICENSE)
+[![CI](https://github.com/OliverHennhoefer/talk-tag/actions/workflows/ci.yml/badge.svg)](https://github.com/OliverHennhoefer/talk-tag/actions/workflows/ci.yml)
+[![Docs](https://github.com/OliverHennhoefer/talk-tag/actions/workflows/docs.yml/badge.svg)](https://github.com/OliverHennhoefer/talk-tag/actions/workflows/docs.yml)
 
-The runtime deployment path is fixed to:
+`talk-tag` is an adapter-only TalkBank CHAT morphosyntactic error annotator for
+`.cha` and `.jsonl` inputs.
+
+## Runtime model contract
+
+The deployment path is fixed:
 
 1. Base model: `unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit`
 2. Adapter: `mash-mash/talkbank-morphosyntax-annotator-final-recon_full_comp_preserve_final_seed3407`
 
-No merged-model runtime path is used.
-
-The package bundles the deployed CHAT token augmentation list and injects those
-tokens into the tokenizer before loading the PEFT adapter. This step is required
-to keep the tokenizer/model vocabulary aligned with the adapter checkpoint.
+No merged-model runtime path is used. The package bundles CHAT token augmentation
+entries and injects them into the tokenizer before adapter loading so tokenizer
+and checkpoint vocabulary stay aligned.
 
 ## Install
 
-Python requirement: `>=3.10`.
+Python `>=3.10` is required.
 
 ```bash
 pip install "talk-tag[runtime]"
 ```
 
-Runtime extras include `torch`, `transformers`, and `peft`.
+## Quickstart
 
-## Hugging Face access
-
-You need Hub access to both repositories above. Set a token before first run:
+Set Hugging Face credentials (required for the fixed base + adapter repositories):
 
 ```bash
 export HF_TOKEN=...
 ```
 
-If token or access is missing, `talk-tag doctor`/`talk-tag model pull` will report
-auth or gated-repo errors.
+On PowerShell:
 
-## First-run workflow
+```powershell
+$env:HF_TOKEN = "..."
+```
 
-1. Check environment:
+Run preflight checks:
 
 ```bash
 talk-tag doctor
 ```
 
-2. Pull/warm model assets:
+Warm model assets:
 
 ```bash
 talk-tag model pull --device auto
 ```
 
-3. Run annotation:
+Annotate a folder:
 
 ```bash
 talk-tag annotate \
@@ -58,7 +64,7 @@ talk-tag annotate \
   --device auto
 ```
 
-Single-file `.cha` example:
+Annotate one file:
 
 ```bash
 talk-tag annotate \
@@ -68,6 +74,14 @@ talk-tag annotate \
   --device auto
 ```
 
+## CLI commands
+
+- `talk-tag annotate`: annotate `.cha` or `.jsonl` data.
+- `talk-tag doctor`: run runtime, dependency, and model-access checks.
+- `talk-tag model pull`: pre-download model assets and optionally verify load.
+
+`.jsonl` inputs require `--speaker-field` and `--text-field`.
+
 ## Inference defaults
 
 - `batch_size = 4`
@@ -75,20 +89,15 @@ talk-tag annotate \
 - `max_seq_length = 512`
 - `max_context_chars = 1200`
 - `limit = 0`
-- greedy decoding (`do_sample = false`)
+- Greedy decoding (`do_sample = false`)
 
-## Supported runtime inputs
+## Documentation and support
 
-- `.cha`
-- `.jsonl` (requires `--speaker-field` and `--text-field`)
+- Documentation: <https://oliverhennhoefer.github.io/talk-tag/>
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
+- Security policy: [SECURITY.md](SECURITY.md)
+- Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md)
 
-The `annotate` command accepts either:
+## Notebook example
 
-- `--input-dir` for folder annotation
-- `--input-path` for a single `.cha` or `.jsonl` file
-
-Other previously supported formats (`.txt`, `.csv`, `.json`, `.xlsx`) are rejected in adapter-only deployment mode.
-
-## Colab quickstart
-
-See [`examples/colab_quickstart.ipynb`](examples/colab_quickstart.ipynb) for a minimal setup flow.
+See [`examples/colab_quickstart.ipynb`](examples/colab_quickstart.ipynb).

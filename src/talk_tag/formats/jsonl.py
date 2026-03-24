@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from talk_tag.config import RunConfig
-from talk_tag.formats.common import passthrough_result
+from talk_tag.formats.common import AnnotationEngine, passthrough_result
 from talk_tag.json_utils import dumps, loads
 from talk_tag.models import FileResult
 from talk_tag.progress import wrap_progress
@@ -13,7 +13,7 @@ def process_jsonl_file(
     input_path: Path,
     output_path: Path,
     config: RunConfig,
-    engine: object,
+    engine: AnnotationEngine,
 ) -> FileResult:
     speaker_field, text_field = config.require_structured_fields(input_path)
     raw_lines = input_path.read_text(encoding="utf-8").splitlines()

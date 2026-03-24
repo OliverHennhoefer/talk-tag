@@ -3,10 +3,13 @@ from __future__ import annotations
 import json
 from typing import Any
 
+orjson: Any | None
+_orjson: Any | None
 try:
-    import orjson  # type: ignore
+    import orjson as _orjson  # type: ignore
 except ImportError:  # pragma: no cover - exercised when optional dependency is absent
-    orjson = None
+    _orjson = None
+orjson = _orjson
 
 
 def loads(payload: bytes | str) -> Any:
