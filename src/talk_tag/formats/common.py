@@ -11,6 +11,7 @@ SPEAKER_LINE_RE = re.compile(r"^(?P<token>\*[A-Z0-9]{1,8}):[ \t]+(?P<body>.*)$")
 PARTICIPANTS_LINE_RE = re.compile(r"^@Participants:\s*(?P<body>.*)$")
 PARTICIPANT_TOKEN_RE = re.compile(r"^\*?(?P<code>[A-Z0-9]{1,8})\b")
 LINE_ENDING_RE = re.compile(r"(\r\n|\n|\r)$")
+CHAT_PUNCTUATION = frozenset({".", "!", ",", "?", ":"})
 
 
 @dataclass(slots=True)
@@ -38,17 +39,23 @@ def normalize_speaker_prefix(content: str) -> str:
 def normalize_chat_punctuation(text: str) -> str:
     chars: list[str] = []
     idx = 0
+    bracket_depth = 0
     while idx < len(text):
         char = text[idx]
-        if char not in {".", ","}:
+        if char == "[":
+            bracket_depth += 1
             chars.append(char)
             idx += 1
             continue
 
-        prev = text[idx - 1] if idx > 0 else ""
-        nxt = text[idx + 1] if idx + 1 < len(text) else ""
-        is_numeric_pair = prev.isdigit() and nxt.isdigit()
-        if is_numeric_pair:
+        if bracket_depth > 0:
+            chars.append(char)
+            if char == "]":
+                bracket_depth -= 1
+            idx += 1
+            continue
+
+        if char not in CHAT_PUNCTUATION:
             chars.append(char)
             idx += 1
             continue
@@ -59,16 +66,12 @@ def normalize_chat_punctuation(text: str) -> str:
             chars.append(" ")
         chars.append(char)
 
-        if char == ",":
-            scan = idx + 1
-            while scan < len(text) and text[scan] == " ":
-                scan += 1
-            if scan < len(text) and text[scan] not in {"\t", "\n", "\r"}:
-                chars.append(" ")
-            idx = scan
-            continue
-
-        idx += 1
+        scan = idx + 1
+        while scan < len(text) and text[scan] == " ":
+            scan += 1
+        if scan < len(text) and text[scan] not in {"\t", "\n", "\r"}:
+            chars.append(" ")
+        idx = scan
 
     return "".join(chars)
 

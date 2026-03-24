@@ -220,6 +220,18 @@ pytest-cache-files-*
 *.executed.ipynb
 examples/sample_in/
 examples/sample_out/
+
+# Ignore docs directories anywhere in the repo
+docs/
+**/docs/
+
+# Ignore data directories anywhere in the repo
+data/
+**/data/
+
+# Ignore handoff directories anywhere in the repo
+handoff/
+**/handoff/
 examples/demo_workspace/
 .jupyter_config/
 .jupyter_data/

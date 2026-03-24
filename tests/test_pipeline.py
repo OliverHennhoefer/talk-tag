@@ -7,6 +7,7 @@ import pytest
 
 from talk_tag.api import annotate_path
 from talk_tag.config import RunConfig
+from talk_tag.formats.common import normalize_chat_punctuation
 from talk_tag.model.deployment_loader import load_chat_tokens
 from talk_tag.models import Annotation, LineResult
 
@@ -153,6 +154,51 @@ def test_single_cha_file_is_supported(case_root: Path) -> None:
     output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
     assert output_lines[0] == "*CHI:\tbad [:: good] one"
     assert output_lines[1] == "*INV:\tbad two"
+
+
+def test_chat_punctuation_spacing_uses_chat_rules() -> None:
+    assert normalize_chat_punctuation("I want that,please.") == "I want that , please ."
+    assert (
+        normalize_chat_punctuation("he bad [:: good],too? now:yes!")
+        == "he bad [:: good] , too ? now : yes !"
+    )
+
+
+def test_cha_output_preserves_chat_tags_while_spacing_punctuation(
+    case_root: Path,
+) -> None:
+    class PunctuationEngine:
+        def annotate_line(
+            self,
+            text: str,
+            *,
+            granularity: str,
+            error_tags: list[str],
+            show_target: bool,
+        ) -> LineResult:
+            del text, granularity, error_tags, show_target
+            return LineResult(
+                original_text="bad text",
+                annotated_text="bad [:: good],too?",
+                annotations=[],
+                line_confidence=0.95,
+                is_target_line=True,
+                confidence_source="heuristic",
+            )
+
+    input_file = case_root / "sample.cha"
+    output_dir = case_root / "out"
+    input_file.write_text("*CHI:\tbad text\n", encoding="utf-8")
+
+    annotate_path(
+        input_path=input_file,
+        output_dir=output_dir,
+        target_speaker="*CHI",
+        engine=PunctuationEngine(),
+    )
+
+    output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
+    assert output_lines[0] == "*CHI:\tbad [:: good] , too ?"
 
 
 def test_jsonl_uses_tt_fields(case_root: Path) -> None:
