@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 
-from talk_tag.api import annotate_folder
+from talk_tag.api import annotate_path
 from talk_tag.config import RunConfig
 from talk_tag.model.deployment_loader import load_chat_tokens
 from talk_tag.models import Annotation, LineResult
@@ -58,11 +59,11 @@ def test_target_speaker_accepts_flexible_code(case_root: Path) -> None:
     input_dir.mkdir()
 
     config = RunConfig(
-        input_dir=input_dir,
+        input_path=input_dir,
         output_dir=output_dir,
         target_speaker="*SUBJ1",
     )
-    config.validate(require_model_source=False)
+    config.validate()
 
 
 def test_target_speaker_rejects_invalid_code(case_root: Path) -> None:
@@ -71,12 +72,12 @@ def test_target_speaker_rejects_invalid_code(case_root: Path) -> None:
     input_dir.mkdir()
 
     config = RunConfig(
-        input_dir=input_dir,
+        input_path=input_dir,
         output_dir=output_dir,
         target_speaker="*bad",
     )
     with pytest.raises(ValueError):
-        config.validate(require_model_source=False)
+        config.validate()
 
 
 def test_output_dir_overlap_is_rejected(case_root: Path) -> None:
@@ -84,12 +85,12 @@ def test_output_dir_overlap_is_rejected(case_root: Path) -> None:
     output_dir = input_dir / "nested"
     input_dir.mkdir(parents=True)
     config = RunConfig(
-        input_dir=input_dir,
+        input_path=input_dir,
         output_dir=output_dir,
         target_speaker="*CHI",
     )
     with pytest.raises(ValueError):
-        config.validate(require_model_source=False)
+        config.validate()
 
 
 def test_cha_header_warning_for_missing_investigator(case_root: Path) -> None:
@@ -100,8 +101,8 @@ def test_cha_header_warning_for_missing_investigator(case_root: Path) -> None:
     source = "@Begin\n@Participants:\tCHI Child, MOT Mother\n*CHI:\tbad token.\n@End\n"
     (input_dir / "sample.cha").write_text(source, encoding="utf-8", newline="")
 
-    annotate_folder(
-        input_dir=input_dir,
+    annotate_path(
+        input_path=input_dir,
         output_dir=output_dir,
         target_speaker="*CHI",
         investigator_speaker="*INV",
@@ -122,8 +123,28 @@ def test_only_target_speaker_is_annotated_in_cha(case_root: Path) -> None:
         encoding="utf-8",
     )
 
-    annotate_folder(
-        input_dir=input_dir,
+    annotate_path(
+        input_path=input_dir,
+        output_dir=output_dir,
+        target_speaker="*CHI",
+        show_target=True,
+        engine=StubEngine(),
+    )
+    output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
+    assert output_lines[0] == "*CHI:\tbad [:: good] one"
+    assert output_lines[1] == "*INV:\tbad two"
+
+
+def test_single_cha_file_is_supported(case_root: Path) -> None:
+    input_file = case_root / "sample.cha"
+    output_dir = case_root / "out"
+    input_file.write_text(
+        "*CHI:\tbad one\n*INV:\tbad two\n",
+        encoding="utf-8",
+    )
+
+    annotate_path(
+        input_path=input_file,
         output_dir=output_dir,
         target_speaker="*CHI",
         show_target=True,
@@ -144,8 +165,8 @@ def test_jsonl_uses_tt_fields(case_root: Path) -> None:
         encoding="utf-8",
     )
 
-    annotate_folder(
-        input_dir=input_dir,
+    annotate_path(
+        input_path=input_dir,
         output_dir=output_dir,
         target_speaker="*CHI",
         speaker_field="speaker",
@@ -160,6 +181,54 @@ def test_jsonl_uses_tt_fields(case_root: Path) -> None:
     assert "tt_line_confidence" in payload
     assert "tt_is_target_line" in payload
 
+    lines = [json.loads(line) for line in payload.strip().splitlines()]
+    chi_line = next(line for line in lines if line["speaker"] == "*CHI")
+    inv_line = next(line for line in lines if line["speaker"] == "*INV")
+
+    assert chi_line["tt_is_target_line"] is True
+    assert chi_line["tt_annotated_text"] == "bad [:: good] text"
+    assert len(chi_line["tt_annotations"]) == 1
+    assert inv_line["tt_is_target_line"] is False
+    assert inv_line["tt_annotated_text"] == "bad text"
+    assert inv_line["tt_annotations"] == []
+
+
+def test_single_jsonl_file_is_supported(case_root: Path) -> None:
+    input_file = case_root / "records.jsonl"
+    output_dir = case_root / "out"
+    input_file.write_text(
+        '{"speaker":"*CHI","utterance":"bad text"}\n'
+        '{"speaker":"*INV","utterance":"bad text"}\n',
+        encoding="utf-8",
+    )
+
+    annotate_path(
+        input_path=input_file,
+        output_dir=output_dir,
+        target_speaker="*CHI",
+        speaker_field="speaker",
+        text_field="utterance",
+        show_target=True,
+        engine=StubEngine(),
+    )
+
+    payload = (output_dir / "records.jsonl").read_text(encoding="utf-8")
+    assert "tt_annotated_text" in payload
+    assert "tt_annotations" in payload
+    assert "tt_line_confidence" in payload
+    assert "tt_is_target_line" in payload
+
+    lines = [json.loads(line) for line in payload.strip().splitlines()]
+    chi_line = next(line for line in lines if line["speaker"] == "*CHI")
+    inv_line = next(line for line in lines if line["speaker"] == "*INV")
+
+    assert chi_line["tt_is_target_line"] is True
+    assert chi_line["tt_annotated_text"] == "bad [:: good] text"
+    assert len(chi_line["tt_annotations"]) == 1
+    assert inv_line["tt_is_target_line"] is False
+    assert inv_line["tt_annotated_text"] == "bad text"
+    assert inv_line["tt_annotations"] == []
+
 
 def test_unsupported_legacy_format_fails_with_clear_error(case_root: Path) -> None:
     input_dir = case_root / "in"
@@ -171,8 +240,8 @@ def test_unsupported_legacy_format_fails_with_clear_error(case_root: Path) -> No
         ValueError,
         match="Only .cha and .jsonl are supported in adapter-only deployment.",
     ):
-        annotate_folder(
-            input_dir=input_dir,
+        annotate_path(
+            input_path=input_dir,
             output_dir=output_dir,
             target_speaker="*CHI",
             engine=StubEngine(),
@@ -191,8 +260,8 @@ def test_unsupported_legacy_format_reports_total_count_when_many(
     (input_dir / "d.xlsx").write_bytes(b"placeholder")
 
     with pytest.raises(ValueError) as excinfo:
-        annotate_folder(
-            input_dir=input_dir,
+        annotate_path(
+            input_path=input_dir,
             output_dir=output_dir,
             target_speaker="*CHI",
             engine=StubEngine(),

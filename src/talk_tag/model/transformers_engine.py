@@ -12,24 +12,16 @@ class TransformersAnnotator:
     def __init__(
         self,
         *,
-        model_dir: Path | None = None,
-        chat_tokens: list[str] | None = None,
         device: Device = "auto",
         max_new_tokens: int = 128,
-        hf_token: str | None = None,
         hf_cache_dir: Path | None = None,
         batch_size: int = 4,
         max_seq_length: int = 512,
         max_context_chars: int = 1200,
         limit: int = 0,
     ) -> None:
-        # model_dir/chat_tokens are legacy constructor args and are intentionally
-        # ignored in adapter-only deployment mode.
-        del model_dir, chat_tokens
-
         self._inference = TalkTagInference(
             device=device,
-            hf_token=hf_token,
             hf_cache_dir=hf_cache_dir,
             config=InferenceConfig(
                 batch_size=batch_size,

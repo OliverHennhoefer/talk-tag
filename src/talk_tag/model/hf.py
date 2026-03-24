@@ -11,16 +11,7 @@ ADAPTER_REPO_ID = "mash-mash/talkbank-morphosyntax-annotator-final-recon_full_co
 ADAPTER_FILENAME = "adapter_config.json"
 
 
-def resolve_auth_token(
-    *,
-    expert_model_token: str | None,
-    hf_token: str | None,
-) -> tuple[str | None, str]:
-    # Keep compatibility with legacy arguments while preferring explicit token values.
-    if expert_model_token:
-        return expert_model_token, "explicit-token"
-    if hf_token:
-        return hf_token, "explicit-token"
+def resolve_auth_token() -> tuple[str | None, str]:
     env_token = os.environ.get("HF_TOKEN")
     if env_token:
         return env_token, "env-token"

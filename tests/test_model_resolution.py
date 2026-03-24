@@ -1,105 +1,64 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import pytest
 
-from talk_tag.api import annotate_folder, pull_model
+from talk_tag.api import annotate_path, pull_model
 from talk_tag.model.hf import resolve_auth_token
 
 
-class StubEngine:
-    def annotate_line(
-        self,
-        text: str,
-        *,
-        granularity: str,
-        error_tags: list[str],
-        show_target: bool,
-    ):
-        raise AssertionError("engine should not be used when config validation fails")
-
-
-def test_resolve_auth_token_precedence(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_resolve_auth_token_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HF_TOKEN", "from-env")
-    token, mode = resolve_auth_token(
-        expert_model_token="from-expert",
-        hf_token="from-hf",
-    )
-    assert token == "from-expert"
-    assert mode == "explicit-token"
-
-    token, mode = resolve_auth_token(
-        expert_model_token=None,
-        hf_token="from-hf",
-    )
-    assert token == "from-hf"
-    assert mode == "explicit-token"
-
-    token, mode = resolve_auth_token(
-        expert_model_token=None,
-        hf_token=None,
-    )
+    token, mode = resolve_auth_token()
     assert token == "from-env"
     assert mode == "env-token"
 
 
-@pytest.mark.parametrize(
-    "override_kwargs",
-    [
-        {"hf_repo_id": "repo"},
-        {"hf_filename": "config.json"},
-        {"hf_token": "secret"},
-        {"expert_model_id": "repo"},
-        {"expert_model_path": Path("fake-model")},
-        {"expert_model_revision": "main"},
-        {"expert_model_token": "secret"},
-    ],
-)
-def test_pull_model_rejects_runtime_source_overrides(
-    override_kwargs: dict[str, object],
+def test_resolve_auth_token_returns_none_without_env(
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            "Model source overrides are not supported in adapter-only deployment."
-        ),
-    ):
-        pull_model(**override_kwargs)
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    token, mode = resolve_auth_token()
+    assert token is None
+    assert mode == "none"
 
 
-@pytest.mark.parametrize(
-    "override_kwargs",
-    [
-        {"hf_repo_id": "repo"},
-        {"hf_filename": "config.json"},
-        {"hf_token": "secret"},
-        {"expert_model_id": "repo"},
-        {"expert_model_path": Path("fake-model")},
-        {"expert_model_revision": "main"},
-        {"expert_model_token": "secret"},
-    ],
-)
-def test_annotate_folder_rejects_runtime_source_overrides(
-    case_root: Path,
-    override_kwargs: dict[str, object],
+def test_pull_model_verify_false_uses_env_token(
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    input_dir = case_root / "in"
-    output_dir = case_root / "out"
-    input_dir.mkdir(parents=True)
-    (input_dir / "sample.cha").write_text("*CHI:\ttest\n", encoding="utf-8")
+    monkeypatch.setenv("HF_TOKEN", "from-env")
+    calls: list[tuple[str, str | None]] = []
 
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            "Model source overrides are not supported in adapter-only deployment."
-        ),
-    ):
-        annotate_folder(
-            input_dir=input_dir,
-            output_dir=output_dir,
+    def fake_probe(
+        *,
+        repo_id: str,
+        filename: str,
+        token: str | None = None,
+        cache_dir: Path | None = None,
+    ) -> Path:
+        del cache_dir
+        calls.append((repo_id, token))
+        return Path(f"{filename}").resolve()
+
+    monkeypatch.setattr("talk_tag.api.probe_model_access", fake_probe)
+
+    context = pull_model(verify_load=False)
+    assert context.auth_mode == "env-token"
+    assert len(calls) == 2
+    assert all(token == "from-env" for _, token in calls)
+
+
+def test_pull_model_rejects_removed_override_kwargs() -> None:
+    with pytest.raises(TypeError):
+        pull_model(hf_repo_id="repo")  # type: ignore[call-arg]
+
+
+def test_annotate_path_rejects_removed_override_kwargs() -> None:
+    with pytest.raises(TypeError):
+        annotate_path(
+            input_path="in",
+            output_dir="out",
             target_speaker="*CHI",
-            engine=StubEngine(),
-            **override_kwargs,
+            hf_token="secret",  # type: ignore[call-arg]
         )

@@ -6,6 +6,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
 from talk_tag.api import StartupContext
 from talk_tag.cli import main
 from talk_tag.doctor import DoctorCheck, DoctorReport
@@ -22,7 +24,7 @@ def test_cli_annotate_prints_startup_summary(
     input_dir.mkdir(parents=True)
     output_dir.mkdir(parents=True)
 
-    def fake_annotate_folder(**kwargs):
+    def fake_annotate_path(**kwargs):
         callback = kwargs["startup_callback"]
         callback(
             StartupContext(
@@ -47,7 +49,7 @@ def test_cli_annotate_prints_startup_summary(
             files=[],
         )
 
-    monkeypatch.setattr("talk_tag.cli.annotate_folder", fake_annotate_folder)
+    monkeypatch.setattr("talk_tag.cli.annotate_path", fake_annotate_path)
     exit_code = main(
         [
             "annotate",
@@ -120,7 +122,7 @@ def test_cli_annotate_prints_na_cache_for_external_engine(
     input_dir.mkdir(parents=True)
     output_dir.mkdir(parents=True)
 
-    def fake_annotate_folder(**kwargs):
+    def fake_annotate_path(**kwargs):
         callback = kwargs["startup_callback"]
         callback(
             StartupContext(
@@ -145,7 +147,7 @@ def test_cli_annotate_prints_na_cache_for_external_engine(
             files=[],
         )
 
-    monkeypatch.setattr("talk_tag.cli.annotate_folder", fake_annotate_folder)
+    monkeypatch.setattr("talk_tag.cli.annotate_path", fake_annotate_path)
     exit_code = main(
         [
             "annotate",
@@ -172,7 +174,7 @@ def test_cli_annotate_returns_nonzero_when_any_file_fails(
     input_dir.mkdir(parents=True)
     output_dir.mkdir(parents=True)
 
-    def fake_annotate_folder(**kwargs):
+    def fake_annotate_path(**kwargs):
         callback = kwargs["startup_callback"]
         callback(
             StartupContext(
@@ -197,7 +199,7 @@ def test_cli_annotate_returns_nonzero_when_any_file_fails(
             files=[],
         )
 
-    monkeypatch.setattr("talk_tag.cli.annotate_folder", fake_annotate_folder)
+    monkeypatch.setattr("talk_tag.cli.annotate_path", fake_annotate_path)
     exit_code = main(
         [
             "annotate",
@@ -212,6 +214,125 @@ def test_cli_annotate_returns_nonzero_when_any_file_fails(
     captured = capsys.readouterr()
     assert exit_code == 1
     assert "Failed files: 1" in captured.out
+
+
+def test_cli_annotate_accepts_single_input_path(
+    case_root: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    input_file = case_root / "sample.cha"
+    output_dir = case_root / "out"
+    input_file.write_text("*CHI:\ttest\n", encoding="utf-8")
+    output_dir.mkdir(parents=True)
+    captured_kwargs: dict[str, object] = {}
+
+    def fake_annotate_path(**kwargs):
+        captured_kwargs.update(kwargs)
+        callback = kwargs["startup_callback"]
+        callback(
+            StartupContext(
+                backend="cpu",
+                model_source="fixed_base_adapter",
+                cache_dir=str(case_root / "cache"),
+                auth_mode="env-token",
+                warning=None,
+            )
+        )
+        return RunSummary(
+            input_dir=str(input_file),
+            output_dir=str(output_dir),
+            started_at="s",
+            ended_at="e",
+            total_files=1,
+            processed_files=1,
+            failed_files=0,
+            target_lines=1,
+            annotated_lines=1,
+            report_path=str(output_dir / "_talk_tag_report.json"),
+            files=[],
+        )
+
+    monkeypatch.setattr("talk_tag.cli.annotate_path", fake_annotate_path)
+    exit_code = main(
+        [
+            "annotate",
+            "--input-path",
+            str(input_file),
+            "--output-dir",
+            str(output_dir),
+            "--target-speaker",
+            "*CHI",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert captured_kwargs["input_path"] == input_file
+    assert exit_code == 0
+    assert "Processed files: 1" in captured.out
+
+
+def test_cli_annotate_accepts_single_jsonl_input_path(
+    case_root: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    input_file = case_root / "records.jsonl"
+    output_dir = case_root / "out"
+    input_file.write_text(
+        '{"speaker":"*CHI","utterance":"bad text"}\n',
+        encoding="utf-8",
+    )
+    output_dir.mkdir(parents=True)
+    captured_kwargs: dict[str, object] = {}
+
+    def fake_annotate_path(**kwargs):
+        captured_kwargs.update(kwargs)
+        callback = kwargs["startup_callback"]
+        callback(
+            StartupContext(
+                backend="cpu",
+                model_source="fixed_base_adapter",
+                cache_dir=str(case_root / "cache"),
+                auth_mode="env-token",
+                warning=None,
+            )
+        )
+        return RunSummary(
+            input_dir=str(input_file),
+            output_dir=str(output_dir),
+            started_at="s",
+            ended_at="e",
+            total_files=1,
+            processed_files=1,
+            failed_files=0,
+            target_lines=1,
+            annotated_lines=1,
+            report_path=str(output_dir / "_talk_tag_report.json"),
+            files=[],
+        )
+
+    monkeypatch.setattr("talk_tag.cli.annotate_path", fake_annotate_path)
+    exit_code = main(
+        [
+            "annotate",
+            "--input-path",
+            str(input_file),
+            "--output-dir",
+            str(output_dir),
+            "--target-speaker",
+            "*CHI",
+            "--speaker-field",
+            "speaker",
+            "--text-field",
+            "utterance",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert captured_kwargs["input_path"] == input_file
+    assert captured_kwargs["speaker_field"] == "speaker"
+    assert captured_kwargs["text_field"] == "utterance"
+    assert exit_code == 0
+    assert "Processed files: 1" in captured.out
 
 
 def test_cli_doctor_exit_code(monkeypatch, capsys) -> None:
@@ -234,7 +355,7 @@ def test_cli_doctor_exit_code(monkeypatch, capsys) -> None:
     assert "Doctor status: failed" in captured.out
 
 
-def test_cli_annotate_rejects_deprecated_model_override_flags(
+def test_cli_annotate_rejects_removed_model_override_flag(
     case_root: Path,
     capsys,
 ) -> None:
@@ -244,22 +365,23 @@ def test_cli_annotate_rejects_deprecated_model_override_flags(
     output_dir.mkdir(parents=True)
     (input_dir / "sample.cha").write_text("*CHI:\ttest\n", encoding="utf-8")
 
-    exit_code = main(
-        [
-            "annotate",
-            "--input-dir",
-            str(input_dir),
-            "--output-dir",
-            str(output_dir),
-            "--target-speaker",
-            "*CHI",
-            "--expert-model-id",
-            "acme/custom",
-        ]
-    )
+    with pytest.raises(SystemExit) as excinfo:
+        main(
+            [
+                "annotate",
+                "--input-dir",
+                str(input_dir),
+                "--output-dir",
+                str(output_dir),
+                "--target-speaker",
+                "*CHI",
+                "--expert-model-id",
+                "acme/custom",
+            ]
+        )
     captured = capsys.readouterr()
-    assert exit_code == 1
-    assert "adapter-only deployment" in captured.err
+    assert excinfo.value.code == 2
+    assert "unrecognized arguments: --expert-model-id" in captured.err
 
 
 def test_cli_module_entrypoint_executes_main() -> None:
