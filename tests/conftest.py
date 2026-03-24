@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import os
 import shutil
-from pathlib import Path
 import uuid
+from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 
@@ -17,7 +18,7 @@ _active_temp_root.mkdir(parents=True, exist_ok=True)
 
 
 @pytest.fixture
-def case_root() -> Path:
+def case_root() -> Generator[Path, None, None]:
     root = (_active_temp_root / str(uuid.uuid4())).resolve()
     root.mkdir(parents=True, exist_ok=True)
     yield root

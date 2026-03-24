@@ -50,24 +50,24 @@ def test_load_deployment_model_uses_required_sequence(
     fake_tokenizer = FakeTokenizer()
     fake_model = FakeModel()
 
+    def _load_base_model(repo_id: str, **kwargs: object) -> FakeModel:
+        call_order.append(f"load_base_model:{repo_id}")
+        return fake_model
+
+    def _load_tokenizer(repo_id: str, **kwargs: object) -> FakeTokenizer:
+        call_order.append(f"load_tokenizer:{repo_id}")
+        return fake_tokenizer
+
+    def _load_adapter(model: FakeModel, repo_id: str, **kwargs: object) -> FakeModel:
+        call_order.append(f"load_adapter:{repo_id}")
+        return model
+
     fake_transformers = types.SimpleNamespace(
-        AutoModelForCausalLM=types.SimpleNamespace(
-            from_pretrained=lambda repo_id, **kwargs: (
-                call_order.append(f"load_base_model:{repo_id}") or fake_model
-            )
-        ),
-        AutoTokenizer=types.SimpleNamespace(
-            from_pretrained=lambda repo_id, **kwargs: (
-                call_order.append(f"load_tokenizer:{repo_id}") or fake_tokenizer
-            )
-        ),
+        AutoModelForCausalLM=types.SimpleNamespace(from_pretrained=_load_base_model),
+        AutoTokenizer=types.SimpleNamespace(from_pretrained=_load_tokenizer),
     )
     fake_peft = types.SimpleNamespace(
-        PeftModel=types.SimpleNamespace(
-            from_pretrained=lambda model, repo_id, **kwargs: (
-                call_order.append(f"load_adapter:{repo_id}") or model
-            )
-        )
+        PeftModel=types.SimpleNamespace(from_pretrained=_load_adapter)
     )
 
     monkeypatch.setitem(sys.modules, "torch", FakeTorch())

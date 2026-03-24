@@ -224,6 +224,8 @@ examples/sample_out/
 # Ignore docs directories anywhere in the repo
 docs/
 **/docs/
+!/docs/
+!/docs/**
 
 # Ignore data directories anywhere in the repo
 data/

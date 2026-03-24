@@ -24,7 +24,7 @@ class AnnotationEngine(Protocol):
         self,
         text: str,
         *,
-        granularity: str,
+        granularity: Granularity,
         error_tags: list[str],
         show_target: bool,
     ) -> LineResult: ...

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Protocol
 
-from talk_tag.config import RunConfig
+from talk_tag.config import Granularity, RunConfig
 from talk_tag.formats.cha import process_cha_file
 from talk_tag.formats.jsonl import process_jsonl_file
 from talk_tag.models import FileResult, LineResult, RunSummary
@@ -18,7 +18,7 @@ class AnnotationEngine(Protocol):
         self,
         text: str,
         *,
-        granularity: str,
+        granularity: Granularity,
         error_tags: list[str],
         show_target: bool,
     ) -> LineResult: ...
