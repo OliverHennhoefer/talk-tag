@@ -5,6 +5,8 @@ from pathlib import Path
 
 BASE_MODEL_REPO_ID = "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit"
 BASE_MODEL_FILENAME = "config.json"
+# Pinned deployed adapter checkpoint (seed3407) to preserve the validated
+# runtime base-tokenizer-adapter compatibility contract.
 ADAPTER_REPO_ID = "mash-mash/talkbank-morphosyntax-annotator-final-recon_full_comp_preserve_final_seed3407"
 ADAPTER_FILENAME = "adapter_config.json"
 
