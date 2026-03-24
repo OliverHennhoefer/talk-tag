@@ -14,7 +14,7 @@
 The deployment path is fixed:
 
 1. Base model: `unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit`
-2. Adapter: `mash-mash/talkbank-morphosyntax-annotator-final-recon_full_comp_preserve_final_seed3407`
+2. Adapter: `mash-mash/Llama_TalkTag_CHAT_error_annotator_adapter`
 
 No merged-model runtime path is used. The package bundles CHAT token augmentation
 entries and injects them into the tokenizer before adapter loading so tokenizer
