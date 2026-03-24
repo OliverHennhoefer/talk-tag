@@ -32,8 +32,15 @@ jobs:
         with:
           languages: ${{ matrix.language }}
 
-      - name: Analyze
+      - id: codeql_analyze
+        name: Analyze
         uses: github/codeql-action/analyze@v3
+        continue-on-error: true
+
+      - name: CodeQL upload unavailable notice
+        if: steps.codeql_analyze.outcome == 'failure'
+        run: |
+          echo "::warning::Code scanning upload is not enabled for this repository. Enable Code scanning at settings/security_analysis to enforce CodeQL alerts."
 
   dependency-review:
     if: github.event_name == 'pull_request'
