@@ -63,17 +63,11 @@ def test_load_deployment_model_uses_required_sequence(
         return model
 
     fake_transformers = types.SimpleNamespace(
-        AutoModelForCausalLM=types.SimpleNamespace(
-            from_pretrained=_load_base_model
-        ),
-        AutoTokenizer=types.SimpleNamespace(
-            from_pretrained=_load_tokenizer
-        ),
+        AutoModelForCausalLM=types.SimpleNamespace(from_pretrained=_load_base_model),
+        AutoTokenizer=types.SimpleNamespace(from_pretrained=_load_tokenizer),
     )
     fake_peft = types.SimpleNamespace(
-        PeftModel=types.SimpleNamespace(
-            from_pretrained=_load_adapter
-        )
+        PeftModel=types.SimpleNamespace(from_pretrained=_load_adapter)
     )
 
     monkeypatch.setitem(sys.modules, "torch", FakeTorch())
@@ -166,4 +160,3 @@ def test_resize_only_when_tokens_added(monkeypatch, case_root: Path) -> None:
         hf_cache_dir=case_root / "cache",
     )
     assert fake_model.resized is False
-

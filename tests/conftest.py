@@ -23,4 +23,3 @@ def case_root() -> Generator[Path, None, None]:
     root.mkdir(parents=True, exist_ok=True)
     yield root
     shutil.rmtree(root, ignore_errors=True)
-
