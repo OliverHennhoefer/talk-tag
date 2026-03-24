@@ -6,6 +6,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
 from talk_tag.api import StartupContext
 from talk_tag.cli import main
 from talk_tag.doctor import DoctorCheck, DoctorReport
@@ -223,8 +225,10 @@ def test_cli_annotate_accepts_single_input_path(
     output_dir = case_root / "out"
     input_file.write_text("*CHI:\ttest\n", encoding="utf-8")
     output_dir.mkdir(parents=True)
+    captured_kwargs: dict[str, object] = {}
 
     def fake_annotate_path(**kwargs):
+        captured_kwargs.update(kwargs)
         callback = kwargs["startup_callback"]
         callback(
             StartupContext(
@@ -235,7 +239,6 @@ def test_cli_annotate_accepts_single_input_path(
                 warning=None,
             )
         )
-        assert kwargs["input_path"] == input_file
         return RunSummary(
             input_dir=str(input_file),
             output_dir=str(output_dir),
@@ -263,6 +266,7 @@ def test_cli_annotate_accepts_single_input_path(
         ]
     )
     captured = capsys.readouterr()
+    assert captured_kwargs["input_path"] == input_file
     assert exit_code == 0
     assert "Processed files: 1" in captured.out
 
@@ -279,8 +283,10 @@ def test_cli_annotate_accepts_single_jsonl_input_path(
         encoding="utf-8",
     )
     output_dir.mkdir(parents=True)
+    captured_kwargs: dict[str, object] = {}
 
     def fake_annotate_path(**kwargs):
+        captured_kwargs.update(kwargs)
         callback = kwargs["startup_callback"]
         callback(
             StartupContext(
@@ -291,9 +297,6 @@ def test_cli_annotate_accepts_single_jsonl_input_path(
                 warning=None,
             )
         )
-        assert kwargs["input_path"] == input_file
-        assert kwargs["speaker_field"] == "speaker"
-        assert kwargs["text_field"] == "utterance"
         return RunSummary(
             input_dir=str(input_file),
             output_dir=str(output_dir),
@@ -325,6 +328,9 @@ def test_cli_annotate_accepts_single_jsonl_input_path(
         ]
     )
     captured = capsys.readouterr()
+    assert captured_kwargs["input_path"] == input_file
+    assert captured_kwargs["speaker_field"] == "speaker"
+    assert captured_kwargs["text_field"] == "utterance"
     assert exit_code == 0
     assert "Processed files: 1" in captured.out
 
@@ -349,7 +355,7 @@ def test_cli_doctor_exit_code(monkeypatch, capsys) -> None:
     assert "Doctor status: failed" in captured.out
 
 
-def test_cli_annotate_rejects_deprecated_model_override_flags(
+def test_cli_annotate_rejects_removed_model_override_flag(
     case_root: Path,
     capsys,
 ) -> None:
@@ -359,22 +365,23 @@ def test_cli_annotate_rejects_deprecated_model_override_flags(
     output_dir.mkdir(parents=True)
     (input_dir / "sample.cha").write_text("*CHI:\ttest\n", encoding="utf-8")
 
-    exit_code = main(
-        [
-            "annotate",
-            "--input-dir",
-            str(input_dir),
-            "--output-dir",
-            str(output_dir),
-            "--target-speaker",
-            "*CHI",
-            "--expert-model-id",
-            "acme/custom",
-        ]
-    )
+    with pytest.raises(SystemExit) as excinfo:
+        main(
+            [
+                "annotate",
+                "--input-dir",
+                str(input_dir),
+                "--output-dir",
+                str(output_dir),
+                "--target-speaker",
+                "*CHI",
+                "--expert-model-id",
+                "acme/custom",
+            ]
+        )
     captured = capsys.readouterr()
-    assert exit_code == 1
-    assert "adapter-only deployment" in captured.err
+    assert excinfo.value.code == 2
+    assert "unrecognized arguments: --expert-model-id" in captured.err
 
 
 def test_cli_module_entrypoint_executes_main() -> None:

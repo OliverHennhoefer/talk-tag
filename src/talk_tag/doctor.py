@@ -164,7 +164,7 @@ def _check_runtime(torch_module: object | None, *, device: Device) -> DoctorChec
 
 
 def _check_default_model_access(*, cache_dir: Path) -> DoctorCheck:
-    token, auth_mode = resolve_auth_token(expert_model_token=None, hf_token=None)
+    token, auth_mode = resolve_auth_token()
     try:
         base_path = probe_model_access(
             repo_id=BASE_MODEL_REPO_ID,

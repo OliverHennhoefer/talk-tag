@@ -88,17 +88,12 @@ class TalkTagInference:
         self,
         *,
         device: Device = "auto",
-        hf_token: str | None = None,
         hf_cache_dir: Path | None = None,
-        expert_model_token: str | None = None,
         config: InferenceConfig | None = None,
         loaded_model: LoadedDeploymentModel | None = None,
     ) -> None:
         self.config = config or InferenceConfig()
-        token, auth_mode = resolve_auth_token(
-            expert_model_token=expert_model_token,
-            hf_token=hf_token,
-        )
+        token, auth_mode = resolve_auth_token()
         self.auth_mode = auth_mode
         self.cache_dir = hf_cache_dir
 

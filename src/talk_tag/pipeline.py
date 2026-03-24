@@ -43,8 +43,6 @@ def _discover_files(input_path: Path) -> tuple[list[Path], list[Path], Path]:
         suffix = input_path.suffix.lower()
         if suffix in HANDLERS:
             files.append(input_path)
-        elif suffix in LEGACY_UNSUPPORTED_SUFFIXES:
-            unsupported.append(input_path)
         else:
             unsupported.append(input_path)
         return sorted(files), sorted(unsupported), input_path.parent
@@ -82,17 +80,17 @@ def run_pipeline(*, config: RunConfig, engine: AnnotationEngine) -> RunSummary:
         total=len(files),
         desc="Files",
     )
-    for input_path in file_iter:
-        relative_path = input_path.relative_to(base_input_dir)
+    for file_path in file_iter:
+        relative_path = file_path.relative_to(base_input_dir)
         output_path = config.output_dir / relative_path
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        handler = HANDLERS[input_path.suffix.lower()]
+        handler = HANDLERS[file_path.suffix.lower()]
         try:
-            result = handler(input_path, output_path, config, engine)
+            result = handler(file_path, output_path, config, engine)
         except Exception as exc:
             result = FileResult(
-                input_path=str(input_path),
+                input_path=str(file_path),
                 output_path=str(output_path),
                 status="failed",
                 errors=[str(exc)],

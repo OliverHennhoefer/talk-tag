@@ -10,29 +10,6 @@ from talk_tag.api import StartupContext, annotate_path, pull_model
 from talk_tag.doctor import run_doctor
 
 
-def _add_advanced_model_args(parser: argparse.ArgumentParser) -> None:
-    advanced = parser.add_argument_group("advanced model options")
-    # Kept for backward compatibility only; adapter-only deployment rejects them.
-    advanced.add_argument("--expert-model-id", default=None, help=argparse.SUPPRESS)
-    advanced.add_argument(
-        "--expert-model-path",
-        type=Path,
-        default=None,
-        help=argparse.SUPPRESS,
-    )
-    advanced.add_argument(
-        "--expert-model-revision",
-        default=None,
-        help=argparse.SUPPRESS,
-    )
-    advanced.add_argument("--expert-model-token", default=None, help=argparse.SUPPRESS)
-
-    # Backward compatibility with old flags; hidden from standard help.
-    advanced.add_argument("--hf-repo-id", default=None, help=argparse.SUPPRESS)
-    advanced.add_argument("--hf-filename", default=None, help=argparse.SUPPRESS)
-    advanced.add_argument("--hf-token", default=None, help=argparse.SUPPRESS)
-
-
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="talk-tag",
@@ -48,8 +25,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Annotate a single .cha/.jsonl file or all supported files in a folder",
     )
     input_group = annotate.add_mutually_exclusive_group(required=True)
-    input_group.add_argument("--input-dir", type=Path)
-    input_group.add_argument("--input-path", type=Path)
+    input_group.add_argument(
+        "--input-dir",
+        type=Path,
+        help="Directory containing .cha/.jsonl files to annotate",
+    )
+    input_group.add_argument(
+        "--input-path",
+        type=Path,
+        help="Path to a single .cha/.jsonl file or a directory",
+    )
     annotate.add_argument("--output-dir", required=True, type=Path)
     annotate.add_argument("--target-speaker", required=True)
     annotate.add_argument("--investigator-speaker", default=None)
@@ -68,11 +53,9 @@ def _build_parser() -> argparse.ArgumentParser:
     annotate.add_argument("--show-target", action="store_true")
     annotate.add_argument("--speaker-field", default=None)
     annotate.add_argument("--text-field", default=None)
-    annotate.add_argument("--csv-line-field", default=None)
     annotate.add_argument("--case-insensitive-speaker", action="store_true")
     annotate.add_argument("--no-progress", action="store_true")
     annotate.add_argument("--fail-fast", action="store_true")
-    _add_advanced_model_args(annotate)
 
     doctor = subparsers.add_parser("doctor", help="Run environment preflight checks")
     doctor.add_argument(
@@ -100,7 +83,6 @@ def _build_parser() -> argparse.ArgumentParser:
     pull.add_argument("--hf-cache-dir", type=Path, default=None)
     pull.add_argument("--no-verify-load", action="store_true")
     pull.add_argument("--json", action="store_true")
-    _add_advanced_model_args(pull)
 
     return parser
 
@@ -127,20 +109,12 @@ def _run_annotate(args: argparse.Namespace) -> int:
             target_speaker=args.target_speaker,
             investigator_speaker=args.investigator_speaker,
             device=args.device,
-            hf_repo_id=args.hf_repo_id,
-            hf_filename=args.hf_filename,
-            hf_token=args.hf_token,
             hf_cache_dir=args.hf_cache_dir,
-            expert_model_id=args.expert_model_id,
-            expert_model_path=args.expert_model_path,
-            expert_model_revision=args.expert_model_revision,
-            expert_model_token=args.expert_model_token,
             granularity=args.granularity,
             error_tags=args.error_tag,
             show_target=args.show_target,
             speaker_field=args.speaker_field,
             text_field=args.text_field,
-            csv_line_field=args.csv_line_field,
             case_insensitive_speaker=args.case_insensitive_speaker,
             continue_on_error=not args.fail_fast,
             show_progress=not args.no_progress,
@@ -181,14 +155,7 @@ def _run_doctor(args: argparse.Namespace) -> int:
 def _run_model_pull(args: argparse.Namespace) -> int:
     try:
         context = pull_model(
-            hf_repo_id=args.hf_repo_id,
-            hf_filename=args.hf_filename,
-            hf_token=args.hf_token,
             hf_cache_dir=args.hf_cache_dir,
-            expert_model_id=args.expert_model_id,
-            expert_model_path=args.expert_model_path,
-            expert_model_revision=args.expert_model_revision,
-            expert_model_token=args.expert_model_token,
             device=args.device,
             verify_load=not args.no_verify_load,
         )
