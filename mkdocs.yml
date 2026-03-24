@@ -21,7 +21,7 @@ plugins:
           options:
             show_source: false
             show_root_heading: true
-            show_if_no_docstring: true
+            show_if_no_docstring: false
 
 markdown_extensions:
   - admonition
@@ -43,4 +43,3 @@ nav:
   - Troubleshooting: troubleshooting.md
   - API Reference: api.md
   - Governance: governance.md
-

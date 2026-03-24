@@ -33,7 +33,7 @@ pip install "talk-tag[runtime]"
 Set Hugging Face credentials (required for the fixed base + adapter repositories):
 
 ```bash
-export HF_TOKEN=...
+export HF_TOKEN="..."
 ```
 
 On PowerShell:
@@ -89,7 +89,7 @@ talk-tag annotate \
 - `max_seq_length = 512`
 - `max_context_chars = 1200`
 - `limit = 0`
-- Greedy decoding (`do_sample = false`)
+- Greedy decoding (`do_sample = False`)
 
 ## Documentation and support
 

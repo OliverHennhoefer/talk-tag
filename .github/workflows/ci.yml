@@ -61,9 +61,13 @@ jobs:
         run: |
           python -m ruff check src tests
 
+      - name: Check formatting
+        run: |
+          python -m ruff format --check src tests
+
       - name: Run MyPy
         run: |
-          python -m mypy src/talk_tag
+          python -m mypy src tests
 
   docs:
     runs-on: ubuntu-latest

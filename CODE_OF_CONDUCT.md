@@ -44,9 +44,9 @@ individual is officially representing the project in public spaces.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the maintainers via the security advisory channel:
+reported by contacting the project maintainers at:
 
-<https://github.com/OliverHennhoefer/talk-tag/security/advisories/new>
+[conduct@example.com](mailto:conduct@example.com)
 
 All complaints will be reviewed and investigated promptly and fairly.
 
@@ -55,4 +55,3 @@ All complaints will be reviewed and investigated promptly and fairly.
 This Code of Conduct is adapted from the Contributor Covenant, version 2.1:
 
 <https://www.contributor-covenant.org/version/2/1/code_of_conduct.html>
-

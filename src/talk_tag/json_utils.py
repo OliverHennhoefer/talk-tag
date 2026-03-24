@@ -4,12 +4,10 @@ import json
 from typing import Any
 
 orjson: Any | None
-_orjson: Any | None
 try:
-    import orjson as _orjson  # type: ignore
+    import orjson  # type: ignore
 except ImportError:  # pragma: no cover - exercised when optional dependency is absent
-    _orjson = None
-orjson = _orjson
+    orjson = None
 
 
 def loads(payload: bytes | str) -> Any:

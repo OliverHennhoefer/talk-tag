@@ -15,18 +15,20 @@ body:
     id: proposal
     attributes:
       label: Proposed solution
+      description: How would you like to solve this problem?
     validations:
       required: true
   - type: textarea
     id: alternatives
     attributes:
       label: Alternatives considered
+      description: What other approaches have you considered?
     validations:
       required: false
   - type: textarea
     id: context
     attributes:
       label: Additional context
+      description: Add any other context, screenshots, or examples.
     validations:
       required: false
-

@@ -26,18 +26,25 @@ body:
     id: steps
     attributes:
       label: Reproduction steps
+      description: "Provide step-by-step instructions to reproduce the issue."
+      placeholder: |
+        1. Install the package with `pip install ...`
+        2. Run the following code: `...`
+        3. Observe the error
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
       label: Expected behavior
+      description: "What did you expect to happen?"
     validations:
       required: true
   - type: textarea
     id: actual
     attributes:
       label: Actual behavior
+      description: "What actually happened? Include any error messages."
     validations:
       required: true
   - type: textarea
@@ -47,4 +54,3 @@ body:
       render: shell
     validations:
       required: false
-
