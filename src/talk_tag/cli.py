@@ -15,7 +15,8 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="talk-tag",
         description=(
             "Adapter-based TalkBank CHAT morphosyntactic annotator for .cha and .jsonl "
-            "(CUDA-first, with automatic MPS/CPU fallback)."
+            "(CUDA-first, with CPU fallback; Apple MPS is not supported for the "
+            "current fixed 4-bit deployment)."
         ),
     )
     subparsers = parser.add_subparsers(dest="command")

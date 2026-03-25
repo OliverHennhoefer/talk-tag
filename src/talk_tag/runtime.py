@@ -98,3 +98,29 @@ def select_runtime_device(
         resolved="cpu",
         warning="No CUDA/MPS backend detected. Falling back to CPU mode.",
     )
+
+
+def select_fixed_deployment_device(
+    *,
+    requested: Device = "auto",
+    torch_module: Any | None = None,
+) -> RuntimeSelection:
+    selection = select_runtime_device(requested=requested, torch_module=torch_module)
+    if selection.resolved != "mps":
+        return selection
+
+    unsupported_message = (
+        "Apple MPS is not supported for the current fixed bnb-4bit deployment. "
+        "Use CUDA or CPU instead."
+    )
+    if requested == "mps":
+        raise RuntimeError(unsupported_message)
+
+    return RuntimeSelection(
+        requested="auto",
+        resolved="cpu",
+        warning=(
+            "MPS was detected, but Apple MPS is not supported for the current "
+            "fixed bnb-4bit deployment. Falling back to CPU mode."
+        ),
+    )

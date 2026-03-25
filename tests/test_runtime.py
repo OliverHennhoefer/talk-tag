@@ -4,7 +4,7 @@ import types
 
 import pytest
 
-from talk_tag.runtime import select_runtime_device
+from talk_tag.runtime import select_fixed_deployment_device, select_runtime_device
 
 
 def _fake_torch(*, cuda: bool, mps: bool) -> object:
@@ -79,3 +79,21 @@ def test_explicit_cpu_is_supported() -> None:
     )
     assert selected.resolved == "cpu"
     assert selected.warning is None
+
+
+def test_fixed_deployment_auto_uses_cpu_instead_of_mps() -> None:
+    selected = select_fixed_deployment_device(
+        requested="auto",
+        torch_module=_fake_torch(cuda=False, mps=True),
+    )
+    assert selected.resolved == "cpu"
+    assert selected.warning is not None
+    assert "not supported" in selected.warning
+
+
+def test_fixed_deployment_explicit_mps_raises() -> None:
+    with pytest.raises(RuntimeError, match="Apple MPS is not supported"):
+        select_fixed_deployment_device(
+            requested="mps",
+            torch_module=_fake_torch(cuda=False, mps=True),
+        )

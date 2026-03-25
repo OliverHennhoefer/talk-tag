@@ -14,7 +14,7 @@ from talk_tag.model.hf import (
     BASE_MODEL_FILENAME,
     BASE_MODEL_REPO_ID,
 )
-from talk_tag.runtime import Device, select_runtime_device
+from talk_tag.runtime import Device, select_fixed_deployment_device
 
 MIN_PYTHON = (3, 10)
 
@@ -147,7 +147,10 @@ def _check_runtime(torch_module: object | None, *, device: Device) -> DoctorChec
             recommendation="Install runtime dependencies, for example: pip install 'talk-tag[runtime]'.",
         )
     try:
-        selection = select_runtime_device(requested=device, torch_module=torch_module)
+        selection = select_fixed_deployment_device(
+            requested=device,
+            torch_module=torch_module,
+        )
     except Exception as exc:
         return DoctorCheck(
             name="runtime-backend",

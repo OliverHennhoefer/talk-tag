@@ -108,6 +108,15 @@ pip install "talk-tag[runtime]"
 ```
 Runtime extras include `torch`, `transformers`, and `peft`.
 
+## Runtime support
+
+The current fixed deployment is based on a `bnb-4bit` Hugging Face model. In
+practice, this means:
+
+- CUDA is the preferred accelerated runtime
+- CPU is supported as a fallback
+- Apple MPS is not supported for this deployment
+
 ## First-run workflow
 
 1. Check environment:
@@ -121,6 +130,8 @@ talk-tag doctor
 ```bash
 talk-tag model pull --device auto
 ```
+
+On Apple Silicon, `--device auto` will fall back to CPU instead of MPS.
 
 3. Run annotation:
 
