@@ -5,13 +5,20 @@ from pathlib import Path
 
 BASE_MODEL_REPO_ID = "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit"
 BASE_MODEL_FILENAME = "config.json"
-# Pinned deployed adapter checkpoint (seed3407) to preserve the validated
-# runtime base-tokenizer-adapter compatibility contract.
-ADAPTER_REPO_ID = "mash-mash/talkbank-morphosyntax-annotator-final-recon_full_comp_preserve_final_seed3407"
+ADAPTER_REPO_ID = "mash-mash/Llama_TalkTag_CHAT_error_annotator_adapter"
 ADAPTER_FILENAME = "adapter_config.json"
 
 
-def resolve_auth_token() -> tuple[str | None, str]:
+def resolve_auth_token(
+    *,
+    expert_model_token: str | None = None,
+    hf_token: str | None = None,
+) -> tuple[str | None, str]:
+    # Keep compatibility with legacy arguments while preferring explicit token values.
+    if expert_model_token:
+        return expert_model_token, "explicit-token"
+    if hf_token:
+        return hf_token, "explicit-token"
     env_token = os.environ.get("HF_TOKEN")
     if env_token:
         return env_token, "env-token"

@@ -1,60 +1,128 @@
 # talk-tag
 
-[![PyPI](https://img.shields.io/pypi/v/talk-tag.svg)](https://pypi.org/project/talk-tag/)
-[![Python](https://img.shields.io/pypi/pyversions/talk-tag.svg)](https://pypi.org/project/talk-tag/)
-[![License](https://img.shields.io/pypi/l/talk-tag.svg)](LICENSE)
-[![CI](https://github.com/OliverHennhoefer/talk-tag/actions/workflows/ci.yml/badge.svg)](https://github.com/OliverHennhoefer/talk-tag/actions/workflows/ci.yml)
-[![Docs](https://github.com/OliverHennhoefer/talk-tag/actions/workflows/docs.yml/badge.svg)](https://github.com/OliverHennhoefer/talk-tag/actions/workflows/docs.yml)
+**talk-tag** is a tool for automatic morphosyntactic error annotation in transcribed speech.
 
-`talk-tag` is an adapter-only TalkBank CHAT morphosyntactic error annotator for
-`.cha` and `.jsonl` inputs.
+It adds inline CHAT-compatible error tags to utterances, helping researchers and annotators
+pre-annotate transcripts for review. The current system follows a subset of the CHAT word-level
+error coding scheme described in [Tools for Analyzing Talk, Part 1: The CHAT Transcription Format (Chapter 18.1)](https://doi.org/10.21415/3mhn-0z89).
 
-## Runtime model contract
+## What It Annotates
 
-The deployment path is fixed:
+TalkTag currently annotates:
 
-1. Base model: `unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit`
-2. Adapter: `mash-mash/Llama_TalkTag_CHAT_error_annotator_adapter`
+- morphological errors: `[* m:*]`
+- substitution errors (subset of semantic errors in the manual): `[* s:r:*]` and `[* s:r:gc:*]`
 
-No merged-model runtime path is used. The package bundles CHAT token augmentation
-entries and injects them into the tokenizer before adapter loading so tokenizer
-and checkpoint vocabulary stay aligned.
+It also inserts target reconstructions inline, following CHAT conventions:
+
+- `[: target]` when the produced form is a non-word
+- `[:: target]` when the produced form is a real word but the intended target should still be recorded
+
+The CHAT manual distinguishes these because `[: target]` lets MOR use "the real
+word target" for parsing, whereas the real-word replacement notation lets MOR
+use "the actual word produced" while still preserving the target for other CLAN
+analyses. See the [CHAT
+manual](https://talkbank.org/0info/manuals/CHAT.html) and the [CLAN
+manual](https://talkbank.org/0info/manuals/CLAN.html).
+
+### Quick Examples
+
+```text
+Yesterday I walk [:: walked] [* m:0ed] to school .
+Yesterday I goed [: went] [* m:=ed] to school . 
+Yesterday me [:: I] [* s:r:gc:pro] walked to school .
+Yesterday I went in [:: to] [* s:r:prep] school .
+```
+
+See the CHAT Transcription Guidelines.
+
+## Annotation Scheme
+
+### Morphological Labels
+CHAT error tags are compositional: each part of a tag indicates, from general to fine-grained the error and its underline process. 
+For example, in `[* m:0ed]`, `m` marks a morphosyntactic error, `0` marks a missing form, and `ed` marks past morpheme.
+
+| Level 1     | Meaning                     |
+|-------------|-----------------------------|
+| `* m:`      | morphosyntactic error       |
+| **Level 2** | **Meaning**                 |
+| `0`         | missing regular form        |
+| `=`         | over-regularisation         |
+| `+`         | superfluous marking         |
+| `++`        | double marking              |
+| `base:`     | base for irregular form     |
+| `irr:`      | irregular for base form     |
+| `sub:`      | past/perfective substitution |
+| `allo`      | allomorphic errors          |
+| `vsg:`      | irregular verb 3SG          |
+| `vun:`      | irregular verb unmarked     |
+| **Level 3** | **Meaning**                 |
+| `mor`       | target morpheme             |
+| `a`         | agreement error             |
+| `i`         | irregular target            |
+
+Common level-3 morphemes include:
+
+`ed`, `en`, `3s`, `ing`, `s`, `'s`, `er`, and `est`.
+
+In practice, common outputs include:
+
+- `[* m:0ed]` for missing past tense
+- `[* m:=ed]` for over-regularised past forms
+- `[* m:03s:a]` for missing 3SG agreement marking
+- 
+### Substitution Labels
+
+| Level 1 | Meaning |
+|---------| --- |
+| `* s:`  | substitution error |
+| **Level 2** | **Meaning** |
+| `r:`    | related lexical substitution |
+| `r:gc:` | related grammatical substitution |
+| **Level 3** | **Meaning** |
+| `POS`   | target part of speech |
+
+Supported part-of-speech (`POS`) in the paper include:
+
+`pro`(pronoun), `det` (determiner), and `prep` (preposition).
+
+In practice, common outputs include:
+
+- `[* s:r:gc:pro]` for pronoun substitutions: 
+possessive for nominative: `her/his/their` for `she/he/they`)
+
+- `[* s:r:prep]` for preposition substitutions: e.g., *he is married `with` (instead of `to`) Maria 
+
+## Scope Notes
+
+- The current runtime follows a narrow prototype scope and does not cover the full CHAT error inventory.
+- The paper's model was developed on children's narrative data from the [ENNI corpus](https://talkbank.org/childes/access/Clinical-Eng/ENNI.html) under low-resource conditions.
+- The most realistic use case is assisted annotation and review of plausible error candidates.
 
 ## Install
 
-Python `>=3.10` is required.
+Python requirement: `>=3.10`.
 
 ```bash
 pip install "talk-tag[runtime]"
 ```
+Runtime extras include `torch`, `transformers`, and `peft`.
 
-## Quickstart
+## First-run workflow
 
-Set Hugging Face credentials (required for the fixed base + adapter repositories):
-
-```bash
-export HF_TOKEN="..."
-```
-
-On PowerShell:
-
-```powershell
-$env:HF_TOKEN = "..."
-```
-
-Run preflight checks:
+1. Check environment:
 
 ```bash
 talk-tag doctor
 ```
 
-Warm model assets:
+2. Pull/warm model assets:
 
 ```bash
 talk-tag model pull --device auto
 ```
 
-Annotate a folder:
+3. Run annotation:
 
 ```bash
 talk-tag annotate \
@@ -64,7 +132,7 @@ talk-tag annotate \
   --device auto
 ```
 
-Annotate one file:
+Single-file `.cha` example:
 
 ```bash
 talk-tag annotate \
@@ -74,14 +142,6 @@ talk-tag annotate \
   --device auto
 ```
 
-## CLI commands
-
-- `talk-tag annotate`: annotate `.cha` or `.jsonl` data.
-- `talk-tag doctor`: run runtime, dependency, and model-access checks.
-- `talk-tag model pull`: pre-download model assets and optionally verify load.
-
-`.jsonl` inputs require `--speaker-field` and `--text-field`.
-
 ## Inference defaults
 
 - `batch_size = 4`
@@ -89,15 +149,20 @@ talk-tag annotate \
 - `max_seq_length = 512`
 - `max_context_chars = 1200`
 - `limit = 0`
-- Greedy decoding (`do_sample = False`)
+- greedy decoding (`do_sample = false`)
 
-## Documentation and support
+## Supported runtime inputs
 
-- Documentation: <https://oliverhennhoefer.github.io/talk-tag/>
-- Changelog: [CHANGELOG.md](CHANGELOG.md)
-- Security policy: [SECURITY.md](SECURITY.md)
-- Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- `.cha`
+- `.jsonl` (requires `--speaker-field` and `--text-field`)
 
-## Notebook example
+The `annotate` command accepts either:
 
-See [`examples/colab_quickstart.ipynb`](examples/colab_quickstart.ipynb).
+- `--input-dir` for folder annotation
+- `--input-path` for a single `.cha` or `.jsonl` file
+
+Other previously supported formats (`.txt`, `.csv`, `.json`, `.xlsx`) are rejected in adapter-only deployment mode.
+
+## Colab quickstart
+
+See [`examples/colab_quickstart.ipynb`](examples/colab_quickstart.ipynb) for a minimal setup flow.
