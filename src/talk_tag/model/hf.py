@@ -5,7 +5,7 @@ from pathlib import Path
 
 BASE_MODEL_REPO_ID = "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit"
 BASE_MODEL_FILENAME = "config.json"
-ADAPTER_REPO_ID = "mash-mash/talkbank-morphosyntax-annotator-final-recon_full_comp_preserve_final_seed3407"
+ADAPTER_REPO_ID = "mash-mash/Llama_TalkTag_CHAT_error_annotator_adapter"
 ADAPTER_FILENAME = "adapter_config.json"
 
 

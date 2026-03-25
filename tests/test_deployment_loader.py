@@ -90,7 +90,7 @@ def test_load_deployment_model_uses_required_sequence(
         "load_tokenizer:unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
         "add_tokens",
         "resize_embeddings",
-        "load_adapter:mash-mash/talkbank-morphosyntax-annotator-final-recon_full_comp_preserve_final_seed3407",
+        "load_adapter:mash-mash/Llama_TalkTag_CHAT_error_annotator_adapter",
     ]
     assert "move_to:cuda" in call_order
     assert call_order[-1] == "eval"
