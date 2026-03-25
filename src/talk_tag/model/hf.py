@@ -11,8 +11,8 @@ ADAPTER_FILENAME = "adapter_config.json"
 
 def resolve_auth_token(
     *,
-    expert_model_token: str | None,
-    hf_token: str | None,
+    expert_model_token: str | None = None,
+    hf_token: str | None = None,
 ) -> tuple[str | None, str]:
     # Keep compatibility with legacy arguments while preferring explicit token values.
     if expert_model_token:
