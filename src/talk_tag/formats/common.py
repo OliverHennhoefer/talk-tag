@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import Protocol
 
-from talk_tag.config import RunConfig
+from talk_tag.config import Granularity, RunConfig
 from talk_tag.models import LineResult
 
 CANONICAL_SPEAKER_LINE_RE = re.compile(r"^(?P<token>\*[A-Z0-9]{1,8}):\t(?P<body>.*)$")
@@ -20,6 +21,17 @@ class ProcessedTextLine:
     is_target_line: bool
     was_annotated: bool
     line_result: LineResult | None
+
+
+class AnnotationEngine(Protocol):
+    def annotate_line(
+        self,
+        text: str,
+        *,
+        granularity: Granularity,
+        error_tags: list[str],
+        show_target: bool,
+    ) -> LineResult: ...
 
 
 def split_line_ending(line: str) -> tuple[str, str]:
@@ -136,7 +148,7 @@ def process_speaker_prefixed_line(
     raw_line: str,
     *,
     config: RunConfig,
-    engine: object,
+    engine: AnnotationEngine,
 ) -> ProcessedTextLine:
     content, ending = split_line_ending(raw_line)
     normalized = normalize_speaker_prefix(content)

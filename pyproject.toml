@@ -4,9 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "talk-tag"
-version = "0.2.0"
-description = "Transcript annotator for speaker-scoped CHAT corpus correction"
+version = "0.4.0"
+description = "LLM-powered TalkBank CHAT annotator for speaker-targeted morphosyntactic transcript correction"
 readme = "README.md"
+authors = [
+    { name = "Oliver Hennhöfer" },
+    { name = "Shamira Venturini" },
+]
+maintainers = [
+    { name = "Oliver Hennhöfer" },
+    { name = "Shamira Venturini" },
+]
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
@@ -39,6 +47,15 @@ runtime = [
     "transformers>=4.52.0",
 ]
 dev = ["pytest>=8.3.5"]
+docs = [
+    "mkdocs-material>=9.6.14",
+    "mkdocstrings[python]>=0.30.0",
+]
+qa = [
+    "mypy>=1.15.0",
+    "ruff>=0.11.0",
+    "twine>=6.1.0",
+]
 
 [project.scripts]
 "talk-tag" = "talk_tag.cli:app"
@@ -47,6 +64,9 @@ dev = ["pytest>=8.3.5"]
 Homepage = "https://github.com/OliverHennhoefer/talk-tag"
 Repository = "https://github.com/OliverHennhoefer/talk-tag"
 Issues = "https://github.com/OliverHennhoefer/talk-tag/issues"
+Documentation = "https://oliverhennhoefer.github.io/talk-tag/"
+Changelog = "https://github.com/OliverHennhoefer/talk-tag/blob/main/CHANGELOG.md"
+Security = "https://github.com/OliverHennhoefer/talk-tag/security/policy"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -74,3 +94,14 @@ norecursedirs = [
     "pytest-temp-root",
     "pytest-cache-files-*",
 ]
+
+[tool.ruff]
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src/talk_tag"]
+ignore_missing_imports = true
+warn_unused_configs = true
+check_untyped_defs = true

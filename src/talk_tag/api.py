@@ -4,11 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Literal, Protocol
 
-from talk_tag.config import (
-    Granularity,
-    RunConfig,
-    validate_fixed_deployment_model_source,
-)
+from talk_tag.config import Granularity, RunConfig
 from talk_tag.model.hf import (
     ADAPTER_FILENAME,
     ADAPTER_REPO_ID,
@@ -28,7 +24,7 @@ class AnnotationEngine(Protocol):
         self,
         text: str,
         *,
-        granularity: str,
+        granularity: Granularity,
         error_tags: list[str],
         show_target: bool,
     ) -> LineResult: ...
@@ -42,7 +38,7 @@ class StartupContext:
     - ``cuda`` / ``mps`` / ``cpu``: backend was verified by loading a
       ``TransformersAnnotator``.
     - ``external``: backend was not verified by talk-tag. This is used for both:
-      - caller-managed engines (``annotate_folder(..., engine=...)``), and
+      - caller-managed engines (``annotate_path(..., engine=...)``), and
       - unverified pulls (``pull_model(..., verify_load=False)``).
 
     Use ``model_source`` to disambiguate these two cases:
@@ -67,13 +63,9 @@ class StartupContext:
 
 
 def _build_engine(config: RunConfig) -> tuple[AnnotationEngine, StartupContext]:
-    token, auth_mode = resolve_auth_token(
-        expert_model_token=config.expert_model_token,
-        hf_token=config.hf_token,
-    )
+    _, auth_mode = resolve_auth_token()
     engine = TransformersAnnotator(
         device=config.device,
-        hf_token=token,
         hf_cache_dir=config.hf_cache_dir,
     )
     context = StartupContext(
@@ -88,14 +80,7 @@ def _build_engine(config: RunConfig) -> tuple[AnnotationEngine, StartupContext]:
 
 def pull_model(
     *,
-    hf_repo_id: str | None = None,
-    hf_filename: str | None = None,
-    hf_token: str | None = None,
     hf_cache_dir: str | Path | None = None,
-    expert_model_id: str | None = None,
-    expert_model_path: str | Path | None = None,
-    expert_model_revision: str | None = None,
-    expert_model_token: str | None = None,
     device: Device = "auto",
     verify_load: bool = True,
 ) -> StartupContext:
@@ -106,29 +91,14 @@ def pull_model(
     engine). In that case, ``model_source`` still reflects the resolved source.
     """
 
-    validate_fixed_deployment_model_source(
-        hf_repo_id=hf_repo_id,
-        hf_filename=hf_filename,
-        expert_model_id=expert_model_id,
-        expert_model_path=Path(expert_model_path)
-        if expert_model_path is not None
-        else None,
-        expert_model_revision=expert_model_revision,
-        expert_model_token=expert_model_token,
-        hf_token=hf_token,
-    )
     active_cache = Path(hf_cache_dir).resolve() if hf_cache_dir is not None else None
-    token, auth_mode = resolve_auth_token(
-        expert_model_token=expert_model_token,
-        hf_token=hf_token,
-    )
+    token, auth_mode = resolve_auth_token()
 
     warning: str | None = None
     backend: Literal["cuda", "mps", "cpu", "external"] = "external"
     if verify_load:
         engine = TransformersAnnotator(
             device=device,
-            hf_token=token,
             hf_cache_dir=active_cache,
         )
         backend = engine.runtime.resolved
@@ -163,20 +133,12 @@ def annotate_path(
     *,
     investigator_speaker: str | None = None,
     device: Device = "auto",
-    hf_repo_id: str | None = None,
-    hf_filename: str | None = None,
-    hf_token: str | None = None,
     hf_cache_dir: str | Path | None = None,
-    expert_model_id: str | None = None,
-    expert_model_path: str | Path | None = None,
-    expert_model_revision: str | None = None,
-    expert_model_token: str | None = None,
     granularity: Granularity = "standard",
     error_tags: list[str] | None = None,
     show_target: bool = False,
     speaker_field: str | None = None,
     text_field: str | None = None,
-    csv_line_field: str | None = None,
     case_insensitive_speaker: bool = False,
     continue_on_error: bool = True,
     show_progress: bool = True,
@@ -196,27 +158,17 @@ def annotate_path(
         target_speaker=target_speaker,
         investigator_speaker=investigator_speaker,
         device=device,
-        hf_repo_id=hf_repo_id,
-        hf_filename=hf_filename,
-        hf_token=hf_token,
         hf_cache_dir=Path(hf_cache_dir) if hf_cache_dir is not None else None,
-        expert_model_id=expert_model_id,
-        expert_model_path=Path(expert_model_path)
-        if expert_model_path is not None
-        else None,
-        expert_model_revision=expert_model_revision,
-        expert_model_token=expert_model_token,
         granularity=granularity,
         error_tags=error_tags or [],
         show_target=show_target,
         speaker_field=speaker_field,
         text_field=text_field,
-        csv_line_field=csv_line_field,
         case_insensitive_speaker=case_insensitive_speaker,
         continue_on_error=continue_on_error,
         show_progress=show_progress,
     )
-    config.validate(require_model_source=True)
+    config.validate()
 
     if engine is None:
         active_engine, context = _build_engine(config)
@@ -236,60 +188,3 @@ def annotate_path(
             )
 
     return run_pipeline(config=config, engine=active_engine)
-
-
-def annotate_folder(
-    input_dir: str | Path,
-    output_dir: str | Path,
-    target_speaker: str,
-    *,
-    investigator_speaker: str | None = None,
-    device: Device = "auto",
-    hf_repo_id: str | None = None,
-    hf_filename: str | None = None,
-    hf_token: str | None = None,
-    hf_cache_dir: str | Path | None = None,
-    expert_model_id: str | None = None,
-    expert_model_path: str | Path | None = None,
-    expert_model_revision: str | None = None,
-    expert_model_token: str | None = None,
-    granularity: Granularity = "standard",
-    error_tags: list[str] | None = None,
-    show_target: bool = False,
-    speaker_field: str | None = None,
-    text_field: str | None = None,
-    csv_line_field: str | None = None,
-    case_insensitive_speaker: bool = False,
-    continue_on_error: bool = True,
-    show_progress: bool = True,
-    engine: AnnotationEngine | None = None,
-    startup_callback: Callable[[StartupContext], None] | None = None,
-) -> RunSummary:
-    """Backward-compatible wrapper for the legacy folder-oriented API."""
-
-    return annotate_path(
-        input_path=input_dir,
-        output_dir=output_dir,
-        target_speaker=target_speaker,
-        investigator_speaker=investigator_speaker,
-        device=device,
-        hf_repo_id=hf_repo_id,
-        hf_filename=hf_filename,
-        hf_token=hf_token,
-        hf_cache_dir=hf_cache_dir,
-        expert_model_id=expert_model_id,
-        expert_model_path=expert_model_path,
-        expert_model_revision=expert_model_revision,
-        expert_model_token=expert_model_token,
-        granularity=granularity,
-        error_tags=error_tags,
-        show_target=show_target,
-        speaker_field=speaker_field,
-        text_field=text_field,
-        csv_line_field=csv_line_field,
-        case_insensitive_speaker=case_insensitive_speaker,
-        continue_on_error=continue_on_error,
-        show_progress=show_progress,
-        engine=engine,
-        startup_callback=startup_callback,
-    )
