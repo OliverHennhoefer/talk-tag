@@ -3,7 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from talk_tag.config import RunConfig
-from talk_tag.formats.common import AnnotationEngine, passthrough_result
+from talk_tag.formats.common import (
+    AnnotationEngine,
+    normalize_chat_reconstructions,
+    passthrough_result,
+)
 from talk_tag.json_utils import dumps, loads
 from talk_tag.models import FileResult
 from talk_tag.progress import wrap_progress
@@ -57,6 +61,9 @@ def process_jsonl_file(
                 granularity=config.granularity,
                 error_tags=config.error_tags,
                 show_target=config.show_target,
+            )
+            line_result.annotated_text = normalize_chat_reconstructions(
+                line_result.annotated_text
             )
             target_lines += 1
             if line_result.annotated_text != text:

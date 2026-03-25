@@ -7,7 +7,10 @@ import pytest
 
 from talk_tag.api import annotate_path
 from talk_tag.config import RunConfig
-from talk_tag.formats.common import normalize_chat_punctuation
+from talk_tag.formats.common import (
+    normalize_chat_punctuation,
+    normalize_chat_reconstructions,
+)
 from talk_tag.model.deployment_loader import load_chat_tokens
 from talk_tag.models import Annotation, LineResult
 
@@ -132,7 +135,7 @@ def test_only_target_speaker_is_annotated_in_cha(case_root: Path) -> None:
         engine=StubEngine(),
     )
     output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
-    assert output_lines[0] == "*CHI:\tbad [:: good] one"
+    assert output_lines[0] == "*CHI:\tbad [= good] one"
     assert output_lines[1] == "*INV:\tbad two"
 
 
@@ -152,19 +155,38 @@ def test_single_cha_file_is_supported(case_root: Path) -> None:
         engine=StubEngine(),
     )
     output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
-    assert output_lines[0] == "*CHI:\tbad [:: good] one"
+    assert output_lines[0] == "*CHI:\tbad [= good] one"
     assert output_lines[1] == "*INV:\tbad two"
 
 
-def test_chat_punctuation_spacing_uses_chat_rules() -> None:
-    assert normalize_chat_punctuation("I want that,please.") == "I want that , please ."
-    assert (
-        normalize_chat_punctuation("he bad [:: good],too? now:yes!")
-        == "he bad [:: good] , too ? now : yes !"
-    )
+def test_chat_reconstruction_normalization_uses_clan_compatible_real_word_target() -> None:
+    assert normalize_chat_reconstructions("bad [:: good] text") == "bad [= good] text"
+    assert normalize_chat_reconstructions("goed [: went] [* m:=ed]") == "goed [: went] [* m:=ed]"
 
 
-def test_cha_output_preserves_chat_tags_while_spacing_punctuation(
+def test_chat_punctuation_spacing_only_compacts_whitelisted_chat_symbols() -> None:
+    assert normalize_chat_punctuation("this is +// .") == "this is +//."
+    assert normalize_chat_punctuation("this is +// ?") == "this is +//?"
+    assert normalize_chat_punctuation("this is +// !") == "this is +//!"
+    assert normalize_chat_punctuation("this is +/ .") == "this is +/."
+    assert normalize_chat_punctuation("this is +/ ?") == "this is +/?"
+    assert normalize_chat_punctuation("this is +/ !") == "this is +/!"
+    assert normalize_chat_punctuation('said rabbit +" .') == 'said rabbit +".'
+    assert normalize_chat_punctuation('said rabbit +" ?') == 'said rabbit +"?'
+    assert normalize_chat_punctuation('said rabbit +" !') == 'said rabbit +"!'
+    assert normalize_chat_punctuation('and then he said +"/ .') == 'and then he said +"/.'
+    assert normalize_chat_punctuation('and then he said +"/ ?') == 'and then he said +"/?'
+    assert normalize_chat_punctuation('and then he said +"/ !') == 'and then he said +"/!'
+    assert normalize_chat_punctuation("( . )") == "(.)"
+    assert normalize_chat_punctuation("( .. )") == "(..)"
+    assert normalize_chat_punctuation("( . . . )") == "(...)"
+    assert normalize_chat_punctuation("foo ( . . . ) bar") == "foo (...) bar"
+    assert normalize_chat_punctuation("and what happened ?") == "and what happened ?"
+    assert normalize_chat_punctuation("balloo:n .") == "balloo:n ."
+    assert normalize_chat_punctuation("<the balaloo [* p:n]> [//]") == "<the balaloo [* p:n]> [//]"
+
+
+def test_cha_output_only_compacts_split_chat_symbols(
     case_root: Path,
 ) -> None:
     class PunctuationEngine:
@@ -179,7 +201,7 @@ def test_cha_output_preserves_chat_tags_while_spacing_punctuation(
             del text, granularity, error_tags, show_target
             return LineResult(
                 original_text="bad text",
-                annotated_text="bad [:: good],too?",
+                annotated_text='bad [:: good] and then +"/ ?',
                 annotations=[],
                 line_confidence=0.95,
                 is_target_line=True,
@@ -198,7 +220,48 @@ def test_cha_output_preserves_chat_tags_while_spacing_punctuation(
     )
 
     output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
-    assert output_lines[0] == "*CHI:\tbad [:: good] , too ?"
+    assert output_lines[0] == '*CHI:\tbad [= good] and then +"/?'
+
+
+def test_cha_output_preserves_atomic_chat_symbols(case_root: Path) -> None:
+    class AtomicSymbolEngine:
+        def annotate_line(
+            self,
+            text: str,
+            *,
+            granularity: str,
+            error_tags: list[str],
+            show_target: bool,
+        ) -> LineResult:
+            del text, granularity, error_tags, show_target
+            return LineResult(
+                original_text="bad text",
+                annotated_text=(
+                    "and he's happy he get [:: gets] [* m:03s:a] "
+                    "balloo:n . \x15461475_463776\x15"
+                ),
+                annotations=[],
+                line_confidence=0.95,
+                is_target_line=True,
+                confidence_source="heuristic",
+            )
+
+    input_file = case_root / "sample.cha"
+    output_dir = case_root / "out"
+    input_file.write_text("*CHI:\tbad text\n", encoding="utf-8")
+
+    annotate_path(
+        input_path=input_file,
+        output_dir=output_dir,
+        target_speaker="*CHI",
+        engine=AtomicSymbolEngine(),
+    )
+
+    output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
+    assert (
+        output_lines[0]
+        == "*CHI:\tand he's happy he get [= gets] [* m:03s:a] balloo:n . \x15461475_463776\x15"
+    )
 
 
 def test_jsonl_uses_tt_fields(case_root: Path) -> None:
@@ -232,7 +295,7 @@ def test_jsonl_uses_tt_fields(case_root: Path) -> None:
     inv_line = next(line for line in lines if line["speaker"] == "*INV")
 
     assert chi_line["tt_is_target_line"] is True
-    assert chi_line["tt_annotated_text"] == "bad [:: good] text"
+    assert chi_line["tt_annotated_text"] == "bad [= good] text"
     assert len(chi_line["tt_annotations"]) == 1
     assert inv_line["tt_is_target_line"] is False
     assert inv_line["tt_annotated_text"] == "bad text"
@@ -269,7 +332,7 @@ def test_single_jsonl_file_is_supported(case_root: Path) -> None:
     inv_line = next(line for line in lines if line["speaker"] == "*INV")
 
     assert chi_line["tt_is_target_line"] is True
-    assert chi_line["tt_annotated_text"] == "bad [:: good] text"
+    assert chi_line["tt_annotated_text"] == "bad [= good] text"
     assert len(chi_line["tt_annotations"]) == 1
     assert inv_line["tt_is_target_line"] is False
     assert inv_line["tt_annotated_text"] == "bad text"
