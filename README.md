@@ -192,19 +192,23 @@ talk-tag annotate \
   --device auto
 ```
 
+When `--limit` is greater than `0`, TalkTag still writes the output file. It
+simply stops annotation after the first `N` target utterances and prints a
+notice that the limit is active.
+
 ## Inference defaults
 
 - `batch_size = 4`
 - `max_new_tokens = 128`
 - `max_seq_length = 512`
 - `max_context_chars = 1200`
-- `limit = 0` (`0` means no cap; use it as a debug/testing limit)
+- `limit = 0` (`0` means no cap; use it as a debug/testing limit on target utterances)
 - greedy decoding (`do_sample = false`)
 
 The CLI currently exposes:
 
 - `--batch-size` to tune inference throughput vs memory usage
-- `--limit` to cap the number of utterances processed in one run for testing/debugging
+- `--limit` to cap the number of target utterances processed in one run for testing/debugging; output files are still written
 
 ## Supported runtime inputs
 

@@ -61,7 +61,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--limit",
         type=int,
         default=0,
-        help="Debug/testing cap on the number of utterances to annotate (0 = no limit).",
+        help=(
+            "Debug/testing cap on the number of target utterances to annotate "
+            "(0 = no limit). Output files are still written."
+        ),
     )
     annotate.add_argument(
         "--show-target",
@@ -123,6 +126,12 @@ def _print_startup_context(context: StartupContext) -> None:
 def _run_annotate(args: argparse.Namespace) -> int:
     try:
         input_path = args.input_path if args.input_path is not None else args.input_dir
+        if args.limit > 0:
+            print(
+                "Inference limit active: "
+                f"annotating at most {args.limit} target utterances. "
+                "Output files will still be written."
+            )
         summary = annotate_path(
             input_path=input_path,
             output_dir=args.output_dir,
