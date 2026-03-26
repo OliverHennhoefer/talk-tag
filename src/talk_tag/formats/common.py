@@ -13,6 +13,7 @@ PARTICIPANTS_LINE_RE = re.compile(r"^@Participants:\s*(?P<body>.*)$")
 PARTICIPANT_TOKEN_RE = re.compile(r"^\*?(?P<code>[A-Z0-9]{1,8})\b")
 LINE_ENDING_RE = re.compile(r"(\r\n|\n|\r)$")
 REAL_WORD_RECONSTRUCTION_RE = re.compile(r"\[::\s*([^\]]*?)\]")
+OPTIONAL_REAL_WORD_TARGET_RE = re.compile(r"\s*\[(?:::|=)\s*[^\]]*?\]")
 CHAT_SPLIT_TERMINATOR_REPLACEMENTS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"\+//\s+\."), "+//."),
     (re.compile(r"\+//\s+\?"), "+//?"),
@@ -76,8 +77,11 @@ def normalize_chat_punctuation(text: str) -> str:
     return normalized
 
 
-def normalize_chat_reconstructions(text: str) -> str:
-    return REAL_WORD_RECONSTRUCTION_RE.sub(r"[= \1]", text)
+def normalize_chat_reconstructions(text: str, *, show_target: bool) -> str:
+    normalized = REAL_WORD_RECONSTRUCTION_RE.sub(r"[= \1]", text)
+    if show_target:
+        return normalized
+    return OPTIONAL_REAL_WORD_TARGET_RE.sub("", normalized)
 
 
 def passthrough_result(text: str, *, is_target_line: bool) -> LineResult:
@@ -170,7 +174,8 @@ def process_speaker_prefixed_line(
         show_target=config.show_target,
     )
     line_result.annotated_text = normalize_chat_reconstructions(
-        line_result.annotated_text
+        line_result.annotated_text,
+        show_target=config.show_target,
     )
     line_result.annotated_text = normalize_chat_punctuation(line_result.annotated_text)
     rebuilt_line = f"{token}:\t{line_result.annotated_text}{ending}"

@@ -18,6 +18,16 @@ It also inserts target reconstructions inline, following CHAT conventions:
 - `[: target]` when the produced form is a non-word
 - `[:: target]` when the produced form is a real word but the intended target should still be recorded
 
+For the current package behavior:
+
+- non-word reconstructions such as `[: went]` are preserved
+- real-word reconstructions are converted to `[= target]`
+- `[= target]` output is hidden by default and included only when `--show-target` is set
+
+This is intentional: according to the CHAT manual, `[= target]` is not required
+for analysis in the way `[: target]` is, so TalkTag keeps it optional and
+defaults to the cleaner output.
+
 The CHAT manual distinguishes these because `[: target]` lets MOR use "the real
 word target" for parsing, whereas the real-word replacement notation lets MOR
 use "the actual word produced" while still preserving the target for other CLAN
@@ -140,6 +150,7 @@ talk-tag annotate \
   --input-dir ./input \
   --output-dir ./output \
   --target-speaker "*CHI" \
+  --batch-size 4 \
   --device auto
 ```
 
@@ -150,6 +161,34 @@ talk-tag annotate \
   --input-path ./input/sample.cha \
   --output-dir ./output \
   --target-speaker "*CHI" \
+  --batch-size 4 \
+  --device auto
+```
+
+Show optional real-word reconstructions in the output:
+
+```bash
+talk-tag annotate \
+  --input-path ./input/sample.cha \
+  --output-dir ./output \
+  --target-speaker "*CHI" \
+  --show-target \
+  --device auto
+```
+
+`--show-target` only affects optional real-word reconstructions such as
+`[= goes]`. Non-word reconstructions such as `[: went]`, which are needed for
+analysis, are preserved either way.
+
+If needed, you can also cap inference for quick local checks:
+
+```bash
+talk-tag annotate \
+  --input-path ./input/sample.cha \
+  --output-dir ./output \
+  --target-speaker "*CHI" \
+  --batch-size 2 \
+  --limit 20 \
   --device auto
 ```
 
@@ -159,8 +198,13 @@ talk-tag annotate \
 - `max_new_tokens = 128`
 - `max_seq_length = 512`
 - `max_context_chars = 1200`
-- `limit = 0`
+- `limit = 0` (`0` means no cap; use it as a debug/testing limit)
 - greedy decoding (`do_sample = false`)
+
+The CLI currently exposes:
+
+- `--batch-size` to tune inference throughput vs memory usage
+- `--limit` to cap the number of utterances processed in one run for testing/debugging
 
 ## Supported runtime inputs
 

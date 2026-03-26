@@ -23,6 +23,8 @@ class RunConfig:
     hf_cache_dir: Path | None = None
     granularity: Granularity = "standard"
     error_tags: list[str] = field(default_factory=list)
+    batch_size: int = 4
+    limit: int = 0
     show_target: bool = False
     speaker_field: str | None = None
     text_field: str | None = None
@@ -43,6 +45,7 @@ class RunConfig:
         self._validate_investigator_speaker()
         self._validate_device()
         self._validate_granularity()
+        self._validate_inference_controls()
 
     def _validate_io_paths(self) -> None:
         if not self.input_path.exists():
@@ -85,6 +88,12 @@ class RunConfig:
     def _validate_device(self) -> None:
         if self.device not in VALID_DEVICES:
             raise ValueError("device must be one of: auto, cuda, mps, cpu.")
+
+    def _validate_inference_controls(self) -> None:
+        if self.batch_size < 1:
+            raise ValueError("batch_size must be >= 1.")
+        if self.limit < 0:
+            raise ValueError("limit must be >= 0.")
 
     def speaker_matches(self, speaker_token: str) -> bool:
         if self.case_insensitive_speaker:

@@ -51,7 +51,26 @@ def _build_parser() -> argparse.ArgumentParser:
         default="standard",
     )
     annotate.add_argument("--error-tag", action="append", default=[])
-    annotate.add_argument("--show-target", action="store_true")
+    annotate.add_argument(
+        "--batch-size",
+        type=int,
+        default=4,
+        help="Inference batch size. Lower this if you run into memory issues.",
+    )
+    annotate.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="Debug/testing cap on the number of utterances to annotate (0 = no limit).",
+    )
+    annotate.add_argument(
+        "--show-target",
+        action="store_true",
+        help=(
+            "Include optional real-word target reconstructions like [= target] "
+            "in output. These are hidden by default."
+        ),
+    )
     annotate.add_argument("--speaker-field", default=None)
     annotate.add_argument("--text-field", default=None)
     annotate.add_argument("--case-insensitive-speaker", action="store_true")
@@ -113,6 +132,8 @@ def _run_annotate(args: argparse.Namespace) -> int:
             hf_cache_dir=args.hf_cache_dir,
             granularity=args.granularity,
             error_tags=args.error_tag,
+            batch_size=args.batch_size,
+            limit=args.limit,
             show_target=args.show_target,
             speaker_field=args.speaker_field,
             text_field=args.text_field,

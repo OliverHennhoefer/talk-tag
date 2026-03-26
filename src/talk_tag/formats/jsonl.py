@@ -63,7 +63,8 @@ def process_jsonl_file(
                 show_target=config.show_target,
             )
             line_result.annotated_text = normalize_chat_reconstructions(
-                line_result.annotated_text
+                line_result.annotated_text,
+                show_target=config.show_target,
             )
             target_lines += 1
             if line_result.annotated_text != text:

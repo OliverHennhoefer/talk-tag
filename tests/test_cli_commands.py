@@ -271,6 +271,66 @@ def test_cli_annotate_accepts_single_input_path(
     assert "Processed files: 1" in captured.out
 
 
+def test_cli_annotate_passes_batch_size_and_limit(
+    case_root: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    input_file = case_root / "sample.cha"
+    output_dir = case_root / "out"
+    input_file.write_text("*CHI:\ttest\n", encoding="utf-8")
+    output_dir.mkdir(parents=True)
+    captured_kwargs: dict[str, object] = {}
+
+    def fake_annotate_path(**kwargs):
+        captured_kwargs.update(kwargs)
+        callback = kwargs["startup_callback"]
+        callback(
+            StartupContext(
+                backend="cpu",
+                model_source="fixed_base_adapter",
+                cache_dir=str(case_root / "cache"),
+                auth_mode="env-token",
+                warning=None,
+            )
+        )
+        return RunSummary(
+            input_dir=str(input_file),
+            output_dir=str(output_dir),
+            started_at="s",
+            ended_at="e",
+            total_files=1,
+            processed_files=1,
+            failed_files=0,
+            target_lines=1,
+            annotated_lines=1,
+            report_path=str(output_dir / "_talk_tag_report.json"),
+            files=[],
+        )
+
+    monkeypatch.setattr("talk_tag.cli.annotate_path", fake_annotate_path)
+    exit_code = main(
+        [
+            "annotate",
+            "--input-path",
+            str(input_file),
+            "--output-dir",
+            str(output_dir),
+            "--target-speaker",
+            "*CHI",
+            "--batch-size",
+            "2",
+            "--limit",
+            "5",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert captured_kwargs["batch_size"] == 2
+    assert captured_kwargs["limit"] == 5
+    assert exit_code == 0
+    assert "Processed files: 1" in captured.out
+
+
 def test_cli_annotate_accepts_single_jsonl_input_path(
     case_root: Path,
     monkeypatch,

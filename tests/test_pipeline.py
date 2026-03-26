@@ -45,8 +45,8 @@ class StubEngine:
             confidence=0.83,
             message="replace bad with good",
         )
-        marker_target = "good" if show_target else ""
-        annotated_text = f"{text[:start]}bad [:: {marker_target}]{text[end:]}"
+        del show_target
+        annotated_text = f"{text[:start]}bad [:: good]{text[end:]}"
         return LineResult(
             original_text=text,
             annotated_text=annotated_text,
@@ -131,11 +131,10 @@ def test_only_target_speaker_is_annotated_in_cha(case_root: Path) -> None:
         input_path=input_dir,
         output_dir=output_dir,
         target_speaker="*CHI",
-        show_target=True,
         engine=StubEngine(),
     )
     output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
-    assert output_lines[0] == "*CHI:\tbad [= good] one"
+    assert output_lines[0] == "*CHI:\tbad one"
     assert output_lines[1] == "*INV:\tbad two"
 
 
@@ -151,17 +150,46 @@ def test_single_cha_file_is_supported(case_root: Path) -> None:
         input_path=input_file,
         output_dir=output_dir,
         target_speaker="*CHI",
-        show_target=True,
         engine=StubEngine(),
     )
     output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
-    assert output_lines[0] == "*CHI:\tbad [= good] one"
+    assert output_lines[0] == "*CHI:\tbad one"
     assert output_lines[1] == "*INV:\tbad two"
 
 
 def test_chat_reconstruction_normalization_uses_clan_compatible_real_word_target() -> None:
-    assert normalize_chat_reconstructions("bad [:: good] text") == "bad [= good] text"
-    assert normalize_chat_reconstructions("goed [: went] [* m:=ed]") == "goed [: went] [* m:=ed]"
+    assert (
+        normalize_chat_reconstructions("bad [:: good] text", show_target=True)
+        == "bad [= good] text"
+    )
+    assert (
+        normalize_chat_reconstructions("bad [:: good] text", show_target=False)
+        == "bad text"
+    )
+    assert (
+        normalize_chat_reconstructions(
+            "goed [: went] [* m:=ed]",
+            show_target=False,
+        )
+        == "goed [: went] [* m:=ed]"
+    )
+
+
+def test_show_target_true_keeps_real_word_reconstruction(case_root: Path) -> None:
+    input_file = case_root / "sample.cha"
+    output_dir = case_root / "out"
+    input_file.write_text("*CHI:\tbad one\n", encoding="utf-8")
+
+    annotate_path(
+        input_path=input_file,
+        output_dir=output_dir,
+        target_speaker="*CHI",
+        show_target=True,
+        engine=StubEngine(),
+    )
+
+    output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
+    assert output_lines[0] == "*CHI:\tbad [= good] one"
 
 
 def test_chat_punctuation_spacing_only_compacts_whitelisted_chat_symbols() -> None:
@@ -220,7 +248,7 @@ def test_cha_output_only_compacts_split_chat_symbols(
     )
 
     output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
-    assert output_lines[0] == '*CHI:\tbad [= good] and then +"/?'
+    assert output_lines[0] == '*CHI:\tbad and then +"/?'
 
 
 def test_cha_output_preserves_atomic_chat_symbols(case_root: Path) -> None:
@@ -254,6 +282,7 @@ def test_cha_output_preserves_atomic_chat_symbols(case_root: Path) -> None:
         input_path=input_file,
         output_dir=output_dir,
         target_speaker="*CHI",
+        show_target=True,
         engine=AtomicSymbolEngine(),
     )
 
@@ -280,7 +309,6 @@ def test_jsonl_uses_tt_fields(case_root: Path) -> None:
         target_speaker="*CHI",
         speaker_field="speaker",
         text_field="utterance",
-        show_target=True,
         engine=StubEngine(),
     )
 
@@ -295,7 +323,7 @@ def test_jsonl_uses_tt_fields(case_root: Path) -> None:
     inv_line = next(line for line in lines if line["speaker"] == "*INV")
 
     assert chi_line["tt_is_target_line"] is True
-    assert chi_line["tt_annotated_text"] == "bad [= good] text"
+    assert chi_line["tt_annotated_text"] == "bad text"
     assert len(chi_line["tt_annotations"]) == 1
     assert inv_line["tt_is_target_line"] is False
     assert inv_line["tt_annotated_text"] == "bad text"
@@ -317,7 +345,6 @@ def test_single_jsonl_file_is_supported(case_root: Path) -> None:
         target_speaker="*CHI",
         speaker_field="speaker",
         text_field="utterance",
-        show_target=True,
         engine=StubEngine(),
     )
 
@@ -332,7 +359,7 @@ def test_single_jsonl_file_is_supported(case_root: Path) -> None:
     inv_line = next(line for line in lines if line["speaker"] == "*INV")
 
     assert chi_line["tt_is_target_line"] is True
-    assert chi_line["tt_annotated_text"] == "bad [= good] text"
+    assert chi_line["tt_annotated_text"] == "bad text"
     assert len(chi_line["tt_annotations"]) == 1
     assert inv_line["tt_is_target_line"] is False
     assert inv_line["tt_annotated_text"] == "bad text"
