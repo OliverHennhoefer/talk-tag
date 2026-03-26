@@ -16,7 +16,7 @@ TalkTag currently annotates:
 It also inserts target reconstructions inline, following CHAT conventions:
 
 - `[: target]` when the produced form is a non-word
-- `[:: target]` when the produced form is a real word but the intended target should still be recorded
+- `[= target]` when the produced form is a real word but the intended target should still be recorded
 
 For the current package behavior:
 
@@ -28,6 +28,11 @@ This is intentional: according to the CHAT manual, `[= target]` is not required
 for analysis in the way `[: target]` is, so TalkTag keeps it optional and
 defaults to the cleaner output.
 
+The underlying model was trained before the current manual standardized the
+real-word target notation as `[= target]`. Because of that, raw generations may
+still reflect the older `[:: target]` convention. TalkTag rewrites those cases
+to `[= target]` in post-processing before saving output.
+
 The CHAT manual distinguishes these because `[: target]` lets MOR use "the real
 word target" for parsing, whereas the real-word replacement notation lets MOR
 use "the actual word produced" while still preserving the target for other CLAN
@@ -38,10 +43,10 @@ manual](https://talkbank.org/0info/manuals/CLAN.html).
 ### Quick Examples
 
 ```text
-Yesterday I walk [:: walked] [* m:0ed] to school .
+Yesterday I walk [= walked] [* m:0ed] to school .
 Yesterday I goed [: went] [* m:=ed] to school . 
-Yesterday me [:: I] [* s:r:gc:pro] walked to school .
-Yesterday I went in [:: to] [* s:r:prep] school .
+Yesterday me [= I] [* s:r:gc:pro] walked to school .
+Yesterday I went in [= to] [* s:r:prep] school .
 ```
 
 See the CHAT Transcription Guidelines.
