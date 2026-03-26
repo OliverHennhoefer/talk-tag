@@ -167,6 +167,14 @@ def process_speaker_prefixed_line(
             line_result=None,
         )
 
+    if not config.consume_target_utterance_slot():
+        return ProcessedTextLine(
+            output_line=normalized + ending,
+            is_target_line=False,
+            was_annotated=False,
+            line_result=None,
+        )
+
     line_result = engine.annotate_line(
         body,
         granularity=config.granularity,

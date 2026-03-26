@@ -55,7 +55,7 @@ def process_jsonl_file(
         speaker = str(payload.get(speaker_field, ""))
         text = str(payload.get(text_field, ""))
         is_target = config.speaker_matches(speaker)
-        if is_target:
+        if is_target and config.consume_target_utterance_slot():
             line_result = engine.annotate_line(
                 text,
                 granularity=config.granularity,
@@ -70,7 +70,7 @@ def process_jsonl_file(
             if line_result.annotated_text != text:
                 annotated_lines += 1
         else:
-            line_result = passthrough_result(text, is_target_line=False)
+            line_result = passthrough_result(text, is_target_line=is_target)
 
         payload["tt_annotated_text"] = line_result.annotated_text
         payload["tt_annotations"] = [item.to_dict() for item in line_result.annotations]

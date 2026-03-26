@@ -67,7 +67,6 @@ def _build_engine(config: RunConfig) -> tuple[AnnotationEngine, StartupContext]:
     engine = TransformersAnnotator(
         device=config.device,
         hf_cache_dir=config.hf_cache_dir,
-        batch_size=config.batch_size,
         limit=config.limit,
     )
     context = StartupContext(
@@ -138,7 +137,6 @@ def annotate_path(
     hf_cache_dir: str | Path | None = None,
     granularity: Granularity = "standard",
     error_tags: list[str] | None = None,
-    batch_size: int = 4,
     limit: int = 0,
     show_target: bool = False,
     speaker_field: str | None = None,
@@ -165,7 +163,6 @@ def annotate_path(
         hf_cache_dir=Path(hf_cache_dir) if hf_cache_dir is not None else None,
         granularity=granularity,
         error_tags=error_tags or [],
-        batch_size=batch_size,
         limit=limit,
         show_target=show_target,
         speaker_field=speaker_field,

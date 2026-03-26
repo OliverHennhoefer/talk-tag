@@ -157,6 +157,28 @@ def test_single_cha_file_is_supported(case_root: Path) -> None:
     assert output_lines[1] == "*INV:\tbad two"
 
 
+def test_limit_caps_target_utterances_across_cha_run(case_root: Path) -> None:
+    input_file = case_root / "sample.cha"
+    output_dir = case_root / "out"
+    input_file.write_text(
+        "*CHI:\tbad one\n*CHI:\tbad two\n*INV:\tbad three\n",
+        encoding="utf-8",
+    )
+
+    annotate_path(
+        input_path=input_file,
+        output_dir=output_dir,
+        target_speaker="*CHI",
+        limit=1,
+        engine=StubEngine(),
+    )
+
+    output_lines = (output_dir / "sample.cha").read_text(encoding="utf-8").splitlines()
+    assert output_lines[0] == "*CHI:\tbad one"
+    assert output_lines[1] == "*CHI:\tbad two"
+    assert output_lines[2] == "*INV:\tbad three"
+
+
 def test_chat_reconstruction_normalization_uses_clan_compatible_real_word_target() -> None:
     assert (
         normalize_chat_reconstructions("bad [:: good] text", show_target=True)
@@ -328,6 +350,33 @@ def test_jsonl_uses_tt_fields(case_root: Path) -> None:
     assert inv_line["tt_is_target_line"] is False
     assert inv_line["tt_annotated_text"] == "bad text"
     assert inv_line["tt_annotations"] == []
+
+
+def test_limit_caps_target_utterances_across_jsonl_run(case_root: Path) -> None:
+    input_file = case_root / "records.jsonl"
+    output_dir = case_root / "out"
+    input_file.write_text(
+        '{"speaker":"*CHI","utterance":"bad one"}\n'
+        '{"speaker":"*CHI","utterance":"bad two"}\n'
+        '{"speaker":"*INV","utterance":"bad three"}\n',
+        encoding="utf-8",
+    )
+
+    annotate_path(
+        input_path=input_file,
+        output_dir=output_dir,
+        target_speaker="*CHI",
+        speaker_field="speaker",
+        text_field="utterance",
+        limit=1,
+        engine=StubEngine(),
+    )
+
+    payload = (output_dir / "records.jsonl").read_text(encoding="utf-8")
+    lines = [json.loads(line) for line in payload.strip().splitlines()]
+    assert lines[0]["tt_annotated_text"] == "bad one"
+    assert lines[1]["tt_annotated_text"] == "bad two"
+    assert lines[2]["tt_annotated_text"] == "bad three"
 
 
 def test_single_jsonl_file_is_supported(case_root: Path) -> None:

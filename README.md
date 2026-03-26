@@ -150,7 +150,6 @@ talk-tag annotate \
   --input-dir ./input \
   --output-dir ./output \
   --target-speaker "*CHI" \
-  --batch-size 4 \
   --device auto
 ```
 
@@ -161,7 +160,6 @@ talk-tag annotate \
   --input-path ./input/sample.cha \
   --output-dir ./output \
   --target-speaker "*CHI" \
-  --batch-size 4 \
   --device auto
 ```
 
@@ -187,7 +185,6 @@ talk-tag annotate \
   --input-path ./input/sample.cha \
   --output-dir ./output \
   --target-speaker "*CHI" \
-  --batch-size 2 \
   --limit 20 \
   --device auto
 ```
@@ -198,7 +195,6 @@ notice that the limit is active.
 
 ## Inference defaults
 
-- `batch_size = 4`
 - `max_new_tokens = 128`
 - `max_seq_length = 512`
 - `max_context_chars = 1200`
@@ -207,7 +203,6 @@ notice that the limit is active.
 
 The CLI currently exposes:
 
-- `--batch-size` to tune inference throughput vs memory usage
 - `--limit` to cap the number of target utterances processed in one run for testing/debugging; output files are still written
 
 ## Supported runtime inputs

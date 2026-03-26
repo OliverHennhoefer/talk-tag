@@ -271,7 +271,7 @@ def test_cli_annotate_accepts_single_input_path(
     assert "Processed files: 1" in captured.out
 
 
-def test_cli_annotate_passes_batch_size_and_limit(
+def test_cli_annotate_passes_limit(
     case_root: Path,
     monkeypatch,
     capsys,
@@ -318,14 +318,11 @@ def test_cli_annotate_passes_batch_size_and_limit(
             str(output_dir),
             "--target-speaker",
             "*CHI",
-            "--batch-size",
-            "2",
             "--limit",
             "5",
         ]
     )
     captured = capsys.readouterr()
-    assert captured_kwargs["batch_size"] == 2
     assert captured_kwargs["limit"] == 5
     assert exit_code == 0
     assert "Processed files: 1" in captured.out
