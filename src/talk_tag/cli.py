@@ -68,6 +68,14 @@ def _build_parser() -> argparse.ArgumentParser:
             "in output. These are hidden by default."
         ),
     )
+    annotate.add_argument(
+        "--print-debug-lines",
+        action="store_true",
+        help=(
+            "Print each changed target utterance as an original/annotated pair during "
+            "the run. Intended for quick debugging."
+        ),
+    )
     annotate.add_argument("--speaker-field", default=None)
     annotate.add_argument("--text-field", default=None)
     annotate.add_argument("--case-insensitive-speaker", action="store_true")
@@ -137,6 +145,7 @@ def _run_annotate(args: argparse.Namespace) -> int:
             error_tags=args.error_tag,
             limit=args.limit,
             show_target=args.show_target,
+            print_debug_lines=args.print_debug_lines,
             speaker_field=args.speaker_field,
             text_field=args.text_field,
             case_insensitive_speaker=args.case_insensitive_speaker,

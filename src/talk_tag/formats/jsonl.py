@@ -7,6 +7,7 @@ from talk_tag.formats.common import (
     AnnotationEngine,
     normalize_chat_reconstructions,
     passthrough_result,
+    print_debug_line,
 )
 from talk_tag.json_utils import dumps, loads
 from talk_tag.models import FileResult
@@ -69,6 +70,13 @@ def process_jsonl_file(
             target_lines += 1
             if line_result.annotated_text != text:
                 annotated_lines += 1
+                if config.print_debug_lines:
+                    print_debug_line(
+                        source_name=input_path.name,
+                        item_label=f"record {line_number}",
+                        original_text=line_result.original_text,
+                        annotated_text=line_result.annotated_text,
+                    )
         else:
             line_result = passthrough_result(text, is_target_line=is_target)
 

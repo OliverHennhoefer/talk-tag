@@ -179,6 +179,27 @@ def test_limit_caps_target_utterances_across_cha_run(case_root: Path) -> None:
     assert output_lines[2] == "*INV:\tbad three"
 
 
+def test_print_debug_lines_emits_changed_cha_lines(case_root: Path, capsys) -> None:
+    input_file = case_root / "sample.cha"
+    output_dir = case_root / "out"
+    input_file.write_text("*CHI:\tbad one\n*CHI:\tplain two\n", encoding="utf-8")
+
+    annotate_path(
+        input_path=input_file,
+        output_dir=output_dir,
+        target_speaker="*CHI",
+        show_target=True,
+        print_debug_lines=True,
+        engine=StubEngine(),
+    )
+
+    captured = capsys.readouterr()
+    assert "[debug] sample.cha:line 1" in captured.out
+    assert "  - bad one" in captured.out
+    assert "  + bad [= good] one" in captured.out
+    assert "line 2" not in captured.out
+
+
 def test_chat_reconstruction_normalization_uses_clan_compatible_real_word_target() -> None:
     assert (
         normalize_chat_reconstructions("bad [:: good] text", show_target=True)

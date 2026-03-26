@@ -95,6 +95,18 @@ def passthrough_result(text: str, *, is_target_line: bool) -> LineResult:
     )
 
 
+def print_debug_line(
+    *,
+    source_name: str,
+    item_label: str,
+    original_text: str,
+    annotated_text: str,
+) -> None:
+    print(f"[debug] {source_name}:{item_label}")
+    print(f"  - {original_text}")
+    print(f"  + {annotated_text}")
+
+
 def validate_participants_header(lines: list[str], config: RunConfig) -> list[str]:
     participants_line = ""
     for line in lines:

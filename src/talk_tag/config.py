@@ -25,6 +25,7 @@ class RunConfig:
     error_tags: list[str] = field(default_factory=list)
     limit: int = 0
     show_target: bool = False
+    print_debug_lines: bool = False
     speaker_field: str | None = None
     text_field: str | None = None
     case_insensitive_speaker: bool = False

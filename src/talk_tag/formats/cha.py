@@ -5,6 +5,7 @@ from pathlib import Path
 from talk_tag.config import RunConfig
 from talk_tag.formats.common import (
     AnnotationEngine,
+    print_debug_line,
     process_speaker_prefixed_line,
     validate_participants_header,
 )
@@ -32,7 +33,7 @@ def process_cha_file(
         total=len(lines),
         desc=f"{input_path.name}:lines",
     )
-    for line in iterator:
+    for line_number, line in enumerate(iterator, start=1):
         if line.startswith("@"):
             output_lines.append(line)
             continue
@@ -47,6 +48,13 @@ def process_cha_file(
             target_lines += 1
         if processed.was_annotated:
             annotated_lines += 1
+            if config.print_debug_lines and processed.line_result is not None:
+                print_debug_line(
+                    source_name=input_path.name,
+                    item_label=f"line {line_number}",
+                    original_text=processed.line_result.original_text,
+                    annotated_text=processed.line_result.annotated_text,
+                )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8", newline="") as handle:

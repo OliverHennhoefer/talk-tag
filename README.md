@@ -178,6 +178,21 @@ talk-tag annotate \
 `[= goes]`. Non-word reconstructions such as `[: went]`, which are needed for
 analysis, are preserved either way.
 
+For quick debugging, you can also print only the target utterances that changed:
+
+```bash
+talk-tag annotate \
+  --input-path ./input/sample.cha \
+  --output-dir ./output \
+  --target-speaker "*CHI" \
+  --limit 5 \
+  --print-debug-lines \
+  --device auto
+```
+
+This prints changed lines as original/annotated pairs during the run. It does
+not change the output file content.
+
 If needed, you can also cap inference for quick local checks:
 
 ```bash
@@ -204,6 +219,7 @@ notice that the limit is active.
 The CLI currently exposes:
 
 - `--limit` to cap the number of target utterances processed in one run for testing/debugging; output files are still written
+- `--print-debug-lines` to print only changed target utterances during a run for quick debugging
 
 ## Supported runtime inputs
 
