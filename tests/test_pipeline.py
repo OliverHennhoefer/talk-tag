@@ -200,7 +200,9 @@ def test_print_debug_lines_emits_changed_cha_lines(case_root: Path, capsys) -> N
     assert "line 2" not in captured.out
 
 
-def test_chat_reconstruction_normalization_uses_clan_compatible_real_word_target() -> None:
+def test_chat_reconstruction_normalization_uses_clan_compatible_real_word_target() -> (
+    None
+):
     assert (
         normalize_chat_reconstructions("bad [:: good] text", show_target=True)
         == "bad [= good] text"
@@ -245,16 +247,25 @@ def test_chat_punctuation_spacing_only_compacts_whitelisted_chat_symbols() -> No
     assert normalize_chat_punctuation('said rabbit +" .') == 'said rabbit +".'
     assert normalize_chat_punctuation('said rabbit +" ?') == 'said rabbit +"?'
     assert normalize_chat_punctuation('said rabbit +" !') == 'said rabbit +"!'
-    assert normalize_chat_punctuation('and then he said +"/ .') == 'and then he said +"/.'
-    assert normalize_chat_punctuation('and then he said +"/ ?') == 'and then he said +"/?'
-    assert normalize_chat_punctuation('and then he said +"/ !') == 'and then he said +"/!'
+    assert (
+        normalize_chat_punctuation('and then he said +"/ .') == 'and then he said +"/.'
+    )
+    assert (
+        normalize_chat_punctuation('and then he said +"/ ?') == 'and then he said +"/?'
+    )
+    assert (
+        normalize_chat_punctuation('and then he said +"/ !') == 'and then he said +"/!'
+    )
     assert normalize_chat_punctuation("( . )") == "(.)"
     assert normalize_chat_punctuation("( .. )") == "(..)"
     assert normalize_chat_punctuation("( . . . )") == "(...)"
     assert normalize_chat_punctuation("foo ( . . . ) bar") == "foo (...) bar"
     assert normalize_chat_punctuation("and what happened ?") == "and what happened ?"
     assert normalize_chat_punctuation("balloo:n .") == "balloo:n ."
-    assert normalize_chat_punctuation("<the balaloo [* p:n]> [//]") == "<the balaloo [* p:n]> [//]"
+    assert (
+        normalize_chat_punctuation("<the balaloo [* p:n]> [//]")
+        == "<the balaloo [* p:n]> [//]"
+    )
 
 
 def test_cha_output_only_compacts_split_chat_symbols(

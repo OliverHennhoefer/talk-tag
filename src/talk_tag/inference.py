@@ -63,6 +63,7 @@ def build_deployment_prompt(*, instruction: str, input_text: str) -> str:
         "### Response:\n"
     )
 
+
 def _first_nonempty_line(text: str) -> str:
     lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     for line in lines:

@@ -326,7 +326,10 @@ def test_cli_annotate_passes_limit(
     assert captured_kwargs["limit"] == 5
     assert exit_code == 0
     assert "Processed files: 1" in captured.out
-    assert "Inference limit active: annotating at most 5 target utterances." in captured.out
+    assert (
+        "Inference limit active: annotating at most 5 target utterances."
+        in captured.out
+    )
 
 
 def test_cli_annotate_passes_print_debug_lines(

@@ -46,9 +46,7 @@ def load_deployment_model(
     try:
         import torch
     except ImportError as exc:  # pragma: no cover - exercised without dependency
-        raise RuntimeError(
-            "torch is required for adapter-based inference."
-        ) from exc
+        raise RuntimeError("torch is required for adapter-based inference.") from exc
 
     runtime = select_fixed_deployment_device(requested=device, torch_module=torch)
     cache_dir_str = str(hf_cache_dir) if hf_cache_dir is not None else None
