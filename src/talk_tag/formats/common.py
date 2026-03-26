@@ -12,7 +12,27 @@ SPEAKER_LINE_RE = re.compile(r"^(?P<token>\*[A-Z0-9]{1,8}):[ \t]+(?P<body>.*)$")
 PARTICIPANTS_LINE_RE = re.compile(r"^@Participants:\s*(?P<body>.*)$")
 PARTICIPANT_TOKEN_RE = re.compile(r"^\*?(?P<code>[A-Z0-9]{1,8})\b")
 LINE_ENDING_RE = re.compile(r"(\r\n|\n|\r)$")
-CHAT_PUNCTUATION = frozenset({".", "!", ",", "?", ":"})
+REAL_WORD_RECONSTRUCTION_RE = re.compile(r"\[::\s*([^\]]*?)\]")
+OPTIONAL_REAL_WORD_TARGET_RE = re.compile(r"\s*\[(?:::|=)\s*[^\]]*?\]")
+CHAT_SPLIT_TERMINATOR_REPLACEMENTS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"\+//\s+\."), "+//."),
+    (re.compile(r"\+//\s+\?"), "+//?"),
+    (re.compile(r"\+//\s+!"), "+//!"),
+    (re.compile(r"\+/\s+\."), "+/."),
+    (re.compile(r"\+/\s+\?"), "+/?"),
+    (re.compile(r"\+/\s+!"), "+/!"),
+    (re.compile(r'\+"\s+\.'), '+".'),
+    (re.compile(r'\+"\s+\?'), '+"?'),
+    (re.compile(r'\+"\s+!'), '+"!'),
+    (re.compile(r'\+"/\s+\.'), '+"/.'),
+    (re.compile(r'\+"/\s+\?'), '+"/?'),
+    (re.compile(r'\+"/\s+!'), '+"/!'),
+)
+CHAT_SPLIT_PAUSE_REPLACEMENTS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"\(\s+\.\s+\)"), "(.)"),
+    (re.compile(r"\(\s+\.\.\s+\)"), "(..)"),
+    (re.compile(r"\(\s+\.\s+\.\s+\.\s+\)"), "(...)"),
+)
 
 
 @dataclass(slots=True)
@@ -49,43 +69,19 @@ def normalize_speaker_prefix(content: str) -> str:
 
 
 def normalize_chat_punctuation(text: str) -> str:
-    chars: list[str] = []
-    idx = 0
-    bracket_depth = 0
-    while idx < len(text):
-        char = text[idx]
-        if char == "[":
-            bracket_depth += 1
-            chars.append(char)
-            idx += 1
-            continue
+    normalized = text
+    for pattern, replacement in CHAT_SPLIT_TERMINATOR_REPLACEMENTS:
+        normalized = pattern.sub(replacement, normalized)
+    for pattern, replacement in CHAT_SPLIT_PAUSE_REPLACEMENTS:
+        normalized = pattern.sub(replacement, normalized)
+    return normalized
 
-        if bracket_depth > 0:
-            chars.append(char)
-            if char == "]":
-                bracket_depth -= 1
-            idx += 1
-            continue
 
-        if char not in CHAT_PUNCTUATION:
-            chars.append(char)
-            idx += 1
-            continue
-
-        while chars and chars[-1] == " ":
-            chars.pop()
-        if chars and chars[-1] not in {"\t", "\n", "\r"}:
-            chars.append(" ")
-        chars.append(char)
-
-        scan = idx + 1
-        while scan < len(text) and text[scan] == " ":
-            scan += 1
-        if scan < len(text) and text[scan] not in {"\t", "\n", "\r"}:
-            chars.append(" ")
-        idx = scan
-
-    return "".join(chars)
+def normalize_chat_reconstructions(text: str, *, show_target: bool) -> str:
+    normalized = REAL_WORD_RECONSTRUCTION_RE.sub(r"[= \1]", text)
+    if show_target:
+        return normalized
+    return OPTIONAL_REAL_WORD_TARGET_RE.sub("", normalized)
 
 
 def passthrough_result(text: str, *, is_target_line: bool) -> LineResult:
@@ -97,6 +93,18 @@ def passthrough_result(text: str, *, is_target_line: bool) -> LineResult:
         is_target_line=is_target_line,
         confidence_source="heuristic",
     )
+
+
+def print_debug_line(
+    *,
+    source_name: str,
+    item_label: str,
+    original_text: str,
+    annotated_text: str,
+) -> None:
+    print(f"[debug] {source_name}:{item_label}")
+    print(f"  - {original_text}")
+    print(f"  + {annotated_text}")
 
 
 def validate_participants_header(lines: list[str], config: RunConfig) -> list[str]:
@@ -171,10 +179,22 @@ def process_speaker_prefixed_line(
             line_result=None,
         )
 
+    if not config.consume_target_utterance_slot():
+        return ProcessedTextLine(
+            output_line=normalized + ending,
+            is_target_line=False,
+            was_annotated=False,
+            line_result=None,
+        )
+
     line_result = engine.annotate_line(
         body,
         granularity=config.granularity,
         error_tags=config.error_tags,
+        show_target=config.show_target,
+    )
+    line_result.annotated_text = normalize_chat_reconstructions(
+        line_result.annotated_text,
         show_target=config.show_target,
     )
     line_result.annotated_text = normalize_chat_punctuation(line_result.annotated_text)

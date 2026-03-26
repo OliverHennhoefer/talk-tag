@@ -32,7 +32,6 @@ Rules:
 
 @dataclass(slots=True)
 class InferenceConfig:
-    batch_size: int = 4
     max_new_tokens: int = 128
     max_seq_length: int = 512
     max_context_chars: int = 1200
@@ -41,8 +40,6 @@ class InferenceConfig:
     instruction: str = DEFAULT_INSTRUCTION
 
     def __post_init__(self) -> None:
-        if self.batch_size < 1:
-            raise ValueError("batch_size must be >= 1")
         if self.max_new_tokens < 1:
             raise ValueError("max_new_tokens must be >= 1")
         if self.max_seq_length < 1:
@@ -65,13 +62,6 @@ def build_deployment_prompt(*, instruction: str, input_text: str) -> str:
         f"{input_text}\n\n"
         "### Response:\n"
     )
-
-
-def _chunked(values: Sequence[str], size: int) -> list[list[str]]:
-    chunks: list[list[str]] = []
-    for idx in range(0, len(values), size):
-        chunks.append(list(values[idx : idx + size]))
-    return chunks
 
 
 def _first_nonempty_line(text: str) -> str:
@@ -127,52 +117,51 @@ class TalkTagInference:
         if not items:
             return []
 
-        results: list[str] = []
-        for chunk in _chunked(items, self.config.batch_size):
-            prompts: list[str] = []
-            for utterance in chunk:
-                limited = utterance[: self.config.max_context_chars]
-                prompts.append(
-                    build_deployment_prompt(
-                        instruction=self.config.instruction,
-                        input_text=limited,
-                    )
+        prompts: list[str] = []
+        for utterance in items:
+            limited = utterance[: self.config.max_context_chars]
+            prompts.append(
+                build_deployment_prompt(
+                    instruction=self.config.instruction,
+                    input_text=limited,
                 )
-
-            encoded = self._tokenizer(
-                prompts,
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-                max_length=self.config.max_seq_length,
             )
 
-            input_ids = encoded["input_ids"].to(self._runtime.resolved)
-            attention_mask = encoded.get("attention_mask")
-            if attention_mask is not None:
-                attention_mask = attention_mask.to(self._runtime.resolved)
+        encoded = self._tokenizer(
+            prompts,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=self.config.max_seq_length,
+        )
 
-            generation_kwargs: dict[str, Any] = {
-                "input_ids": input_ids,
-                "max_new_tokens": self.config.max_new_tokens,
-                "do_sample": False,
-                "pad_token_id": self._tokenizer.pad_token_id,
-                "eos_token_id": self._tokenizer.eos_token_id,
-            }
-            if attention_mask is not None:
-                generation_kwargs["attention_mask"] = attention_mask
+        input_ids = encoded["input_ids"].to(self._runtime.resolved)
+        attention_mask = encoded.get("attention_mask")
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(self._runtime.resolved)
 
-            with self._torch.no_grad():
-                generated = self._model.generate(**generation_kwargs)
+        generation_kwargs: dict[str, Any] = {
+            "input_ids": input_ids,
+            "max_new_tokens": self.config.max_new_tokens,
+            "do_sample": False,
+            "pad_token_id": self._tokenizer.pad_token_id,
+            "eos_token_id": self._tokenizer.eos_token_id,
+        }
+        if attention_mask is not None:
+            generation_kwargs["attention_mask"] = attention_mask
 
-            if attention_mask is not None:
-                prompt_lengths = attention_mask.sum(dim=1).tolist()
-            else:
-                prompt_lengths = [input_ids.shape[1]] * len(chunk)
+        with self._torch.no_grad():
+            generated = self._model.generate(**generation_kwargs)
 
-            for idx, prompt_len in enumerate(prompt_lengths):
-                continuation = generated[idx][int(prompt_len) :]
-                raw = self._tokenizer.decode(continuation, skip_special_tokens=True)
-                line = _first_nonempty_line(raw)
-                results.append(line if line else chunk[idx])
+        if attention_mask is not None:
+            prompt_lengths = attention_mask.sum(dim=1).tolist()
+        else:
+            prompt_lengths = [input_ids.shape[1]] * len(items)
+
+        results: list[str] = []
+        for idx, prompt_len in enumerate(prompt_lengths):
+            continuation = generated[idx][int(prompt_len) :]
+            raw = self._tokenizer.decode(continuation, skip_special_tokens=True)
+            line = _first_nonempty_line(raw)
+            results.append(line if line else items[idx])
         return results

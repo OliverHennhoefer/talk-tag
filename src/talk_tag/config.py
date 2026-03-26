@@ -23,12 +23,15 @@ class RunConfig:
     hf_cache_dir: Path | None = None
     granularity: Granularity = "standard"
     error_tags: list[str] = field(default_factory=list)
+    limit: int = 0
     show_target: bool = False
+    print_debug_lines: bool = False
     speaker_field: str | None = None
     text_field: str | None = None
     case_insensitive_speaker: bool = False
     continue_on_error: bool = True
     show_progress: bool = True
+    _remaining_limit: int = field(init=False, repr=False, default=0)
 
     def __post_init__(self) -> None:
         self.input_path = Path(self.input_path).resolve()
@@ -36,6 +39,7 @@ class RunConfig:
         if self.hf_cache_dir is not None:
             self.hf_cache_dir = Path(self.hf_cache_dir).resolve()
         self.error_tags = [tag.strip() for tag in self.error_tags if tag.strip()]
+        self._remaining_limit = self.limit
 
     def validate(self) -> None:
         self._validate_io_paths()
@@ -43,6 +47,7 @@ class RunConfig:
         self._validate_investigator_speaker()
         self._validate_device()
         self._validate_granularity()
+        self._validate_inference_controls()
 
     def _validate_io_paths(self) -> None:
         if not self.input_path.exists():
@@ -86,6 +91,10 @@ class RunConfig:
         if self.device not in VALID_DEVICES:
             raise ValueError("device must be one of: auto, cuda, mps, cpu.")
 
+    def _validate_inference_controls(self) -> None:
+        if self.limit < 0:
+            raise ValueError("limit must be >= 0.")
+
     def speaker_matches(self, speaker_token: str) -> bool:
         if self.case_insensitive_speaker:
             return speaker_token.lower() == self.target_speaker.lower()
@@ -98,3 +107,13 @@ class RunConfig:
                 f"{file_path.suffix.lower()} files."
             )
         return self.speaker_field, self.text_field
+
+    def can_annotate_target_utterance(self) -> bool:
+        return self.limit == 0 or self._remaining_limit > 0
+
+    def consume_target_utterance_slot(self) -> bool:
+        if not self.can_annotate_target_utterance():
+            return False
+        if self.limit > 0:
+            self._remaining_limit -= 1
+        return True

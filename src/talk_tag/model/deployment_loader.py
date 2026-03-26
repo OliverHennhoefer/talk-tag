@@ -7,7 +7,7 @@ from typing import Any
 
 from talk_tag.json_utils import loads
 from talk_tag.model.hf import ADAPTER_REPO_ID, BASE_MODEL_REPO_ID
-from talk_tag.runtime import Device, RuntimeSelection, select_runtime_device
+from talk_tag.runtime import Device, RuntimeSelection, select_fixed_deployment_device
 
 
 @dataclass(slots=True)
@@ -45,15 +45,19 @@ def load_deployment_model(
 ) -> LoadedDeploymentModel:
     try:
         import torch
+    except ImportError as exc:  # pragma: no cover - exercised without dependency
+        raise RuntimeError("torch is required for adapter-based inference.") from exc
+
+    runtime = select_fixed_deployment_device(requested=device, torch_module=torch)
+    cache_dir_str = str(hf_cache_dir) if hf_cache_dir is not None else None
+
+    try:
         from peft import PeftModel
         from transformers import AutoModelForCausalLM, AutoTokenizer
     except ImportError as exc:  # pragma: no cover - exercised without dependency
         raise RuntimeError(
             "transformers, peft, and torch are required for adapter-based inference."
         ) from exc
-
-    runtime = select_runtime_device(requested=device, torch_module=torch)
-    cache_dir_str = str(hf_cache_dir) if hf_cache_dir is not None else None
 
     # 1) Load base model.
     model = AutoModelForCausalLM.from_pretrained(

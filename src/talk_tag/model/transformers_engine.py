@@ -15,7 +15,6 @@ class TransformersAnnotator:
         device: Device = "auto",
         max_new_tokens: int = 128,
         hf_cache_dir: Path | None = None,
-        batch_size: int = 4,
         max_seq_length: int = 512,
         max_context_chars: int = 1200,
         limit: int = 0,
@@ -24,7 +23,6 @@ class TransformersAnnotator:
             device=device,
             hf_cache_dir=hf_cache_dir,
             config=InferenceConfig(
-                batch_size=batch_size,
                 max_new_tokens=max_new_tokens,
                 max_seq_length=max_seq_length,
                 max_context_chars=max_context_chars,

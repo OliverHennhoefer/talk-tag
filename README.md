@@ -16,7 +16,22 @@ TalkTag currently annotates:
 It also inserts target reconstructions inline, following CHAT conventions:
 
 - `[: target]` when the produced form is a non-word
-- `[:: target]` when the produced form is a real word but the intended target should still be recorded
+- `[= target]` when the produced form is a real word but the intended target should still be recorded
+
+For the current package behavior:
+
+- non-word reconstructions such as `[: went]` are preserved
+- real-word reconstructions are converted to `[= target]`
+- `[= target]` output is hidden by default and included only when `--show-target` is set
+
+This is intentional: according to the CHAT manual, `[= target]` is not required
+for analysis in the way `[: target]` is, so TalkTag keeps it optional and
+defaults to the cleaner output.
+
+The underlying model was trained before the current manual standardized the
+real-word target notation as `[= target]`. Because of that, raw generations may
+still reflect the older `[:: target]` convention. TalkTag rewrites those cases
+to `[= target]` in post-processing before saving output.
 
 The CHAT manual distinguishes these because `[: target]` lets MOR use "the real
 word target" for parsing, whereas the real-word replacement notation lets MOR
@@ -28,10 +43,10 @@ manual](https://talkbank.org/0info/manuals/CLAN.html).
 ### Quick Examples
 
 ```text
-Yesterday I walk [:: walked] [* m:0ed] to school .
+Yesterday I walk [= walked] [* m:0ed] to school .
 Yesterday I goed [: went] [* m:=ed] to school . 
-Yesterday me [:: I] [* s:r:gc:pro] walked to school .
-Yesterday I went in [:: to] [* s:r:prep] school .
+Yesterday me [= I] [* s:r:gc:pro] walked to school .
+Yesterday I went in [= to] [* s:r:prep] school .
 ```
 
 See the CHAT Transcription Guidelines.
@@ -108,6 +123,15 @@ pip install "talk-tag[runtime]"
 ```
 Runtime extras include `torch`, `transformers`, and `peft`.
 
+## Runtime support
+
+The current fixed deployment is based on a `bnb-4bit` Hugging Face model. In
+practice, this means:
+
+- CUDA is the preferred accelerated runtime
+- CPU is supported as a fallback
+- Apple MPS is not supported for this deployment
+
 ## First-run workflow
 
 1. Check environment:
@@ -121,6 +145,8 @@ talk-tag doctor
 ```bash
 talk-tag model pull --device auto
 ```
+
+On Apple Silicon, `--device auto` will fall back to CPU instead of MPS.
 
 3. Run annotation:
 
@@ -142,14 +168,63 @@ talk-tag annotate \
   --device auto
 ```
 
+Show optional real-word reconstructions in the output:
+
+```bash
+talk-tag annotate \
+  --input-path ./input/sample.cha \
+  --output-dir ./output \
+  --target-speaker "*CHI" \
+  --show-target \
+  --device auto
+```
+
+`--show-target` only affects optional real-word reconstructions such as
+`[= goes]`. Non-word reconstructions such as `[: went]`, which are needed for
+analysis, are preserved either way.
+
+For quick debugging, you can also print only the target utterances that changed:
+
+```bash
+talk-tag annotate \
+  --input-path ./input/sample.cha \
+  --output-dir ./output \
+  --target-speaker "*CHI" \
+  --limit 5 \
+  --print-debug-lines \
+  --device auto
+```
+
+This prints changed lines as original/annotated pairs during the run. It does
+not change the output file content.
+
+If needed, you can also cap inference for quick local checks:
+
+```bash
+talk-tag annotate \
+  --input-path ./input/sample.cha \
+  --output-dir ./output \
+  --target-speaker "*CHI" \
+  --limit 20 \
+  --device auto
+```
+
+When `--limit` is greater than `0`, TalkTag still writes the output file. It
+simply stops annotation after the first `N` target utterances and prints a
+notice that the limit is active.
+
 ## Inference defaults
 
-- `batch_size = 4`
 - `max_new_tokens = 128`
 - `max_seq_length = 512`
 - `max_context_chars = 1200`
-- `limit = 0`
+- `limit = 0` (`0` means no cap; use it as a debug/testing limit on target utterances)
 - greedy decoding (`do_sample = false`)
+
+The CLI currently exposes:
+
+- `--limit` to cap the number of target utterances processed in one run for testing/debugging; output files are still written
+- `--print-debug-lines` to print only changed target utterances during a run for quick debugging
 
 ## Supported runtime inputs
 

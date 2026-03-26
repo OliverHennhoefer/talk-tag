@@ -15,7 +15,8 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="talk-tag",
         description=(
             "Adapter-based TalkBank CHAT morphosyntactic annotator for .cha and .jsonl "
-            "(CUDA-first, with automatic MPS/CPU fallback)."
+            "(CUDA-first, with CPU fallback; Apple MPS is not supported for the "
+            "current fixed 4-bit deployment)."
         ),
     )
     subparsers = parser.add_subparsers(dest="command")
@@ -50,7 +51,31 @@ def _build_parser() -> argparse.ArgumentParser:
         default="standard",
     )
     annotate.add_argument("--error-tag", action="append", default=[])
-    annotate.add_argument("--show-target", action="store_true")
+    annotate.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help=(
+            "Debug/testing cap on the number of target utterances to annotate "
+            "(0 = no limit). Output files are still written."
+        ),
+    )
+    annotate.add_argument(
+        "--show-target",
+        action="store_true",
+        help=(
+            "Include optional real-word target reconstructions like [= target] "
+            "in output. These are hidden by default."
+        ),
+    )
+    annotate.add_argument(
+        "--print-debug-lines",
+        action="store_true",
+        help=(
+            "Print each changed target utterance as an original/annotated pair during "
+            "the run. Intended for quick debugging."
+        ),
+    )
     annotate.add_argument("--speaker-field", default=None)
     annotate.add_argument("--text-field", default=None)
     annotate.add_argument("--case-insensitive-speaker", action="store_true")
@@ -103,6 +128,12 @@ def _print_startup_context(context: StartupContext) -> None:
 def _run_annotate(args: argparse.Namespace) -> int:
     try:
         input_path = args.input_path if args.input_path is not None else args.input_dir
+        if args.limit > 0:
+            print(
+                "Inference limit active: "
+                f"annotating at most {args.limit} target utterances. "
+                "Output files will still be written."
+            )
         summary = annotate_path(
             input_path=input_path,
             output_dir=args.output_dir,
@@ -112,7 +143,9 @@ def _run_annotate(args: argparse.Namespace) -> int:
             hf_cache_dir=args.hf_cache_dir,
             granularity=args.granularity,
             error_tags=args.error_tag,
+            limit=args.limit,
             show_target=args.show_target,
+            print_debug_lines=args.print_debug_lines,
             speaker_field=args.speaker_field,
             text_field=args.text_field,
             case_insensitive_speaker=args.case_insensitive_speaker,

@@ -111,7 +111,6 @@ def test_inference_truncates_context_and_returns_one_line(monkeypatch) -> None:
     inference = TalkTagInference(
         loaded_model=loaded,
         config=InferenceConfig(
-            batch_size=2,
             max_context_chars=5,
             max_new_tokens=32,
             max_seq_length=128,

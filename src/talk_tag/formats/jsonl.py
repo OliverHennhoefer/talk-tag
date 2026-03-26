@@ -3,7 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from talk_tag.config import RunConfig
-from talk_tag.formats.common import AnnotationEngine, passthrough_result
+from talk_tag.formats.common import (
+    AnnotationEngine,
+    normalize_chat_reconstructions,
+    passthrough_result,
+    print_debug_line,
+)
 from talk_tag.json_utils import dumps, loads
 from talk_tag.models import FileResult
 from talk_tag.progress import wrap_progress
@@ -51,18 +56,29 @@ def process_jsonl_file(
         speaker = str(payload.get(speaker_field, ""))
         text = str(payload.get(text_field, ""))
         is_target = config.speaker_matches(speaker)
-        if is_target:
+        if is_target and config.consume_target_utterance_slot():
             line_result = engine.annotate_line(
                 text,
                 granularity=config.granularity,
                 error_tags=config.error_tags,
                 show_target=config.show_target,
             )
+            line_result.annotated_text = normalize_chat_reconstructions(
+                line_result.annotated_text,
+                show_target=config.show_target,
+            )
             target_lines += 1
             if line_result.annotated_text != text:
                 annotated_lines += 1
+                if config.print_debug_lines:
+                    print_debug_line(
+                        source_name=input_path.name,
+                        item_label=f"record {line_number}",
+                        original_text=line_result.original_text,
+                        annotated_text=line_result.annotated_text,
+                    )
         else:
-            line_result = passthrough_result(text, is_target_line=False)
+            line_result = passthrough_result(text, is_target_line=is_target)
 
         payload["tt_annotated_text"] = line_result.annotated_text
         payload["tt_annotations"] = [item.to_dict() for item in line_result.annotations]
