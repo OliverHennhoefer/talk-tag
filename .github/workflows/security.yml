@@ -53,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - id: dependency_review
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         continue-on-error: true
 
       - name: Dependency review unavailable notice
