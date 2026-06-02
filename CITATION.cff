@@ -1,0 +1,36 @@
+```yaml
+cff-version: 1.2.0
+message: "If you use this work, please cite it using the metadata from this file."
+title: "TalkTag: Fine-grained morphosyntactic error annotation for transcribed speech"
+authors:
+  - family-names: Venturini
+    given-names: Shamira
+  - family-names: Hennhöfer
+    given-names: Oliver
+  - family-names: Kinkel
+    given-names: Steffen
+  - family-names: Strötgen
+    given-names: Jannik
+abstract: "Fine-grained morphosyntactic error annotation is important in clinical and developmental language research, yet it is labour-intensive, expert-dependent, and difficult to scale. We present TalkTag, an LLM-based lightweight tool fine-tuned to automate CHAT-style error annotation in spoken-language transcripts. Developed under conditions of extreme data scarcity using children's narrative data, the system shows the feasibility of linguistic analysis in low-resource settings. Our evaluation demonstrates that TalkTag produces encouragingly precise annotation while effectively identifying instances where linguistic ambiguity makes automated tagging genuinely complex. In summary, with TalkTag, we provide a scalable alternative to manual error annotation and practically viable support for morphosyntactic error annotation."
+identifiers:
+  - type: other
+    value: "arXiv:2606.01820"
+    description: "arXiv identifier"
+preferred-citation:
+  type: article
+  title: "TalkTag: Fine-grained morphosyntactic error annotation for transcribed speech"
+  authors:
+    - family-names: Venturini
+      given-names: Shamira
+    - family-names: Hennhöfer
+      given-names: Oliver
+    - family-names: Kinkel
+      given-names: Steffen
+    - family-names: Strötgen
+      given-names: Jannik
+  year: 2026
+  identifiers:
+    - type: other
+      value: "arXiv:2606.01820"
+      description: "arXiv identifier"
+```
