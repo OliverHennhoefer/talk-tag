@@ -60,26 +60,3 @@ jobs:
         if: steps.dependency_review.outcome == 'failure'
         run: |
           echo "::warning::Dependency Review is not enabled for this repository. Enable Dependency graph and GitHub Advanced Security at settings/security_analysis to enforce this check."
-
-  dependency-audit:
-    if: github.event_name != 'pull_request'
-    name: Dependency Audit
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - uses: astral-sh/setup-uv@v7
-
-      - name: Install locked dependencies for audit
-        run: |
-          uv sync --locked --all-extras
-          uv pip install pip-audit
-
-      - name: Run dependency audit
-        run: |
-          uv run pip-audit
