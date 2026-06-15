@@ -4,7 +4,14 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+      day: monday
+      timezone: Europe/Berlin
     open-pull-requests-limit: 10
+    groups:
+      github-actions-minor-patch:
+        update-types:
+          - minor
+          - patch
     labels:
       - "dependencies"
       - "github-actions"
@@ -15,9 +22,30 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
+      day: monday
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 0
     labels:
       - "dependencies"
       - "python"
+    commit-message:
+      prefix: "chore"
+
+  - package-ecosystem: uv
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 10
+    groups:
+      uv-minor-patch:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - "dependencies"
+      - "python"
+      - "uv"
     commit-message:
       prefix: "chore"
