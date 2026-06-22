@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Synthetic CHAT transcript and Colab quickstart for trying the annotation workflow without private data.
+
+### Fixed
+
+- Include `bitsandbytes` in the runtime extra required by the fixed 4-bit model.
+- Make `talk-tag doctor` report a missing or unusable `bitsandbytes` installation.
+
 ## [0.4.0] - 2026-03-24
 
 ### Added

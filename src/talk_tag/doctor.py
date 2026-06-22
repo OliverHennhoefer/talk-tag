@@ -239,6 +239,15 @@ def run_doctor(
     )
     report.checks.append(peft_check)
 
+    bitsandbytes_check, _bitsandbytes_module = _check_import(
+        "bitsandbytes",
+        recommendation=(
+            "Install bitsandbytes>=0.46.1, for example: "
+            "pip install 'talk-tag[runtime]'."
+        ),
+    )
+    report.checks.append(bitsandbytes_check)
+
     report.checks.append(_check_runtime(torch_module, device=device))
     report.checks.append(_check_cache_dir(active_cache, fix=fix))
     report.checks.append(_check_default_model_access(cache_dir=active_cache))
