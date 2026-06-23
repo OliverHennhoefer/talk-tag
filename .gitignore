@@ -238,3 +238,5 @@ examples/demo_workspace/
 .jupyter_config/
 .jupyter_data/
 .jupyter_runtime/
+# macOS metadata
+.DS_Store

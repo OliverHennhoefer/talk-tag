@@ -60,7 +60,7 @@ def load_deployment_model(
         ) from exc
 
     # 1) Load base model.
-    model = AutoModelForCausalLM.from_pretrained(
+    model: Any = AutoModelForCausalLM.from_pretrained(
         BASE_MODEL_REPO_ID,
         token=hf_token,
         cache_dir=cache_dir_str,

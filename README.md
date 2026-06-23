@@ -121,7 +121,7 @@ Python requirement: `>=3.10`.
 ```bash
 pip install "talk-tag[runtime]"
 ```
-Runtime extras include `torch`, `transformers`, and `peft`.
+Runtime extras include `torch`, `transformers`, `peft`, and `bitsandbytes`.
 
 ## Runtime support
 
@@ -156,6 +156,19 @@ talk-tag annotate \
   --output-dir ./output \
   --target-speaker "*CHI" \
   --device auto
+```
+
+From a repository checkout, try TalkTag with the bundled synthetic transcript
+instead of private data:
+
+```bash
+talk-tag annotate \
+  --input-path ./examples/sample.cha \
+  --output-dir ./examples/sample_out \
+  --target-speaker "*CHI" \
+  --device auto \
+  --limit 2 \
+  --show-target
 ```
 
 Single-file `.cha` example:
@@ -239,5 +252,7 @@ The `annotate` command accepts either:
 Other previously supported formats (`.txt`, `.csv`, `.json`, `.xlsx`) are rejected in adapter-only deployment mode.
 
 ## Colab quickstart
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/OliverHennhoefer/talk-tag/blob/main/examples/colab_quickstart.ipynb)
 
 See [`examples/colab_quickstart.ipynb`](examples/colab_quickstart.ipynb) for a minimal setup flow.
