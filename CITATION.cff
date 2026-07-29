@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this work, please cite it using the metadata from this file."
-title: "TalkTag: Fine-grained morphosyntactic error annotation for transcribed speech"
+title: "TalkTag: Fine-Grained Morphosyntactic Error Annotation for Transcribed Speech"
 authors:
   - family-names: Venturini
     given-names: Shamira
@@ -12,12 +12,16 @@ authors:
     given-names: Jannik
 abstract: "Fine-grained morphosyntactic error annotation is important in clinical and developmental language research, yet it is labour-intensive, expert-dependent, and difficult to scale. We present TalkTag, an LLM-based lightweight tool fine-tuned to automate CHAT-style error annotation in spoken-language transcripts. Developed under conditions of extreme data scarcity using children's narrative data, the system shows the feasibility of linguistic analysis in low-resource settings. Our evaluation demonstrates that TalkTag produces encouragingly precise annotation while effectively identifying instances where linguistic ambiguity makes automated tagging genuinely complex. In summary, with TalkTag, we provide a scalable alternative to manual error annotation and practically viable support for morphosyntactic error annotation."
 identifiers:
+  - type: doi
+    value: "10.18653/v1/2026.law-main.20"
   - type: other
-    value: "arXiv:2606.01820"
-    description: "arXiv identifier"
+    value: "979-8-89176-404-0"
+    description: "ISBN"
+doi: "10.18653/v1/2026.law-main.20"
+url: "https://aclanthology.org/2026.law-main.20/"
 preferred-citation:
-  type: article
-  title: "TalkTag: Fine-grained morphosyntactic error annotation for transcribed speech"
+  type: conference-paper
+  title: "TalkTag: Fine-Grained Morphosyntactic Error Annotation for Transcribed Speech"
   authors:
     - family-names: Venturini
       given-names: Shamira
@@ -27,8 +31,26 @@ preferred-citation:
       given-names: Steffen
     - family-names: Strötgen
       given-names: Jannik
+  editors:
+    - family-names: Liu
+      given-names: Yang Janet
+    - family-names: Gessler
+      given-names: Luke
+  collection-title: "Proceedings of the 20th Linguistic Annotation Workshop (LAW XX)"
+  conference:
+    name: "20th Linguistic Annotation Workshop (LAW XX)"
+    location: "San Diego, California, USA"
+  month: 7
   year: 2026
+  publisher:
+    name: "Association for Computational Linguistics"
+  start: 309
+  end: 322
+  doi: "10.18653/v1/2026.law-main.20"
+  url: "https://aclanthology.org/2026.law-main.20/"
   identifiers:
+    - type: doi
+      value: "10.18653/v1/2026.law-main.20"
     - type: other
-      value: "arXiv:2606.01820"
-      description: "arXiv identifier"
+      value: "979-8-89176-404-0"
+      description: "ISBN"
