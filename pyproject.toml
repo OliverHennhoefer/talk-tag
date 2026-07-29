@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "talk-tag"
-version = "0.4.0"
+version = "0.5.0"
 description = "LLM-powered TalkBank CHAT annotator for speaker-targeted morphosyntactic transcript correction"
 readme = "README.md"
 authors = [
@@ -68,6 +68,7 @@ Issues = "https://github.com/OliverHennhoefer/talk-tag/issues"
 Documentation = "https://oliverhennhoefer.github.io/talk-tag/"
 Changelog = "https://github.com/OliverHennhoefer/talk-tag/blob/main/CHANGELOG.md"
 Security = "https://github.com/OliverHennhoefer/talk-tag/security/policy"
+"Author: Shamira Venturini" = "https://github.com/shamira-venturini"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
