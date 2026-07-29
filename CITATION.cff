@@ -4,6 +4,7 @@ title: "TalkTag: Fine-Grained Morphosyntactic Error Annotation for Transcribed S
 authors:
   - family-names: Venturini
     given-names: Shamira
+    website: "https://github.com/shamira-venturini"
   - family-names: Hennhöfer
     given-names: Oliver
   - family-names: Kinkel
@@ -25,6 +26,7 @@ preferred-citation:
   authors:
     - family-names: Venturini
       given-names: Shamira
+      website: "https://github.com/shamira-venturini"
     - family-names: Hennhöfer
       given-names: Oliver
     - family-names: Kinkel
