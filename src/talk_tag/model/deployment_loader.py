@@ -26,7 +26,7 @@ def load_chat_tokens() -> list[str]:
     )
     raw = loads(payload)
     if not isinstance(raw, list):
-        raise ValueError("chat_tokens.json must contain a JSON list of token strings.")
+        raise TypeError("chat_tokens.json must contain a JSON list of token strings.")
     tokens: list[str] = []
     for item in raw:
         if item is None:
