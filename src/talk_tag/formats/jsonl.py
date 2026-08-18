@@ -41,7 +41,7 @@ def process_jsonl_file(
 
         payload = loads(raw_line)
         if not isinstance(payload, dict):
-            raise ValueError(
+            raise TypeError(
                 f"{input_path}:{line_number}: each JSONL line must be a JSON object."
             )
         if speaker_field not in payload:

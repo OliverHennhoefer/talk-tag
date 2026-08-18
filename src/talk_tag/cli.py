@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from talk_tag.api import StartupContext, annotate_path, pull_model
 from talk_tag.doctor import run_doctor
@@ -153,7 +153,7 @@ def _run_annotate(args: argparse.Namespace) -> int:
             show_progress=not args.no_progress,
             startup_callback=_print_startup_context,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
@@ -192,7 +192,7 @@ def _run_model_pull(args: argparse.Namespace) -> int:
             device=args.device,
             verify_load=not args.no_verify_load,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 

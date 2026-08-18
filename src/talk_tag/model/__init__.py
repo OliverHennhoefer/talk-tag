@@ -10,13 +10,13 @@ from talk_tag.model.hf import (
 from talk_tag.model.transformers_engine import TransformersAnnotator
 
 __all__ = [
-    "LoadedDeploymentModel",
-    "BASE_MODEL_REPO_ID",
-    "BASE_MODEL_FILENAME",
-    "ADAPTER_REPO_ID",
     "ADAPTER_FILENAME",
-    "probe_model_access",
-    "resolve_auth_token",
+    "ADAPTER_REPO_ID",
+    "BASE_MODEL_FILENAME",
+    "BASE_MODEL_REPO_ID",
+    "LoadedDeploymentModel",
     "TransformersAnnotator",
     "load_chat_tokens",
+    "probe_model_access",
+    "resolve_auth_token",
 ]

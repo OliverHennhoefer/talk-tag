@@ -51,7 +51,7 @@ def test_inference_truncates_context_and_returns_one_line(monkeypatch) -> None:
             self.rows = rows
             self.shape = (len(rows), max((len(r) for r in rows), default=0))
 
-        def to(self, device: str) -> "FakeTensor":
+        def to(self, device: str) -> FakeTensor:
             return self
 
         def sum(self, dim: int) -> FakeList:
