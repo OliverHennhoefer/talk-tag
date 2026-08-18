@@ -7,12 +7,13 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from talk_tag.model.hf import probe_model_access, resolve_auth_token
 from talk_tag.model.hf import (
     ADAPTER_FILENAME,
     ADAPTER_REPO_ID,
     BASE_MODEL_FILENAME,
     BASE_MODEL_REPO_ID,
+    probe_model_access,
+    resolve_auth_token,
 )
 from talk_tag.runtime import Device, select_fixed_deployment_device
 
@@ -24,7 +25,7 @@ def _resolve_default_hf_cache_dir() -> Path:
         from huggingface_hub.constants import HF_HUB_CACHE
 
         return Path(HF_HUB_CACHE).resolve()
-    except Exception:
+    except Exception:  # noqa: BLE001
         env_cache = os.environ.get("HF_HUB_CACHE")
         if env_cache:
             return Path(env_cache).resolve()
@@ -83,7 +84,7 @@ def _check_import(
 ) -> tuple[DoctorCheck, object | None]:
     try:
         module = importlib.import_module(module_name)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         return (
             DoctorCheck(
                 name=f"import-{module_name}",
@@ -121,7 +122,7 @@ def _check_cache_dir(cache_dir: Path, *, fix: bool) -> DoctorCheck:
             ok=True,
             detail=f"Cache is writable: {cache_dir}",
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         recommendation = (
             f"Set --hf-cache-dir to a writable location (current={cache_dir})."
         )
@@ -151,7 +152,7 @@ def _check_runtime(torch_module: object | None, *, device: Device) -> DoctorChec
             requested=device,
             torch_module=torch_module,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         return DoctorCheck(
             name="runtime-backend",
             ok=False,
@@ -181,7 +182,7 @@ def _check_default_model_access(*, cache_dir: Path) -> DoctorCheck:
             token=token,
             cache_dir=cache_dir,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         return DoctorCheck(
             name="hf-default-model",
             ok=False,

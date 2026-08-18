@@ -88,7 +88,7 @@ def run_pipeline(*, config: RunConfig, engine: AnnotationEngine) -> RunSummary:
         handler = HANDLERS[file_path.suffix.lower()]
         try:
             result = handler(file_path, output_path, config, engine)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             result = FileResult(
                 input_path=str(file_path),
                 output_path=str(output_path),
