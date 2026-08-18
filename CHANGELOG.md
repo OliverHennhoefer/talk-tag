@@ -7,6 +7,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-18
+
+### Added
+
+- Add Ruff pre-commit hooks for local lint and formatting checks.
+
+### Fixed
+
+- Raise `TypeError` for JSONL records and chat-token resources with invalid JSON shapes.
+- Resolve Ruff quality-check failures in the public exports, typing imports, CLI subprocess invocation, and intentional exception boundaries.
+
 ## [0.5.0] - 2026-07-29
 
 ### Added
