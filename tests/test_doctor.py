@@ -62,6 +62,7 @@ def test_run_doctor_collects_expected_checks(
     assert "import-torch" in names
     assert "import-transformers" in names
     assert "import-peft" in names
+    assert "import-bitsandbytes" in names
     assert "runtime-backend" in names
     assert "cache-write" in names
     assert "hf-default-model" in names
@@ -111,3 +112,54 @@ def test_run_doctor_uses_runtime_default_cache_when_unspecified(
 
     assert captured["cache-write"] == default_cache
     assert captured["hf-default-model"] == default_cache
+
+
+def test_run_doctor_reports_missing_bitsandbytes(
+    case_root: Path,
+    monkeypatch,
+) -> None:
+    class FakeCuda:
+        @staticmethod
+        def is_available() -> bool:
+            return False
+
+    class FakeMps:
+        @staticmethod
+        def is_available() -> bool:
+            return False
+
+    fake_torch = types.SimpleNamespace(
+        cuda=FakeCuda(),
+        backends=types.SimpleNamespace(mps=FakeMps()),
+        __version__="0.0",
+    )
+
+    def fake_check_import(module_name: str, *, recommendation: str):
+        if module_name == "bitsandbytes":
+            return (
+                DoctorCheck(
+                    name="import-bitsandbytes",
+                    ok=False,
+                    detail="Import failed: missing",
+                    recommendation=recommendation,
+                ),
+                None,
+            )
+        return (
+            DoctorCheck(name=f"import-{module_name}", ok=True, detail="ok"),
+            fake_torch if module_name == "torch" else object(),
+        )
+
+    monkeypatch.setattr("talk_tag.doctor._check_import", fake_check_import)
+    monkeypatch.setattr(
+        "talk_tag.doctor.probe_model_access",
+        lambda **_kwargs: case_root / "hf-cache" / "config.json",
+    )
+
+    report = run_doctor(cache_dir=case_root / "hf-cache")
+    check = next(item for item in report.checks if item.name == "import-bitsandbytes")
+
+    assert report.ok is False
+    assert check.ok is False
+    assert check.recommendation is not None
+    assert "talk-tag[runtime]" in check.recommendation

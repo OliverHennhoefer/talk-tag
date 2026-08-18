@@ -30,7 +30,7 @@ def _mps_is_available(torch_module: Any) -> bool:
         return False
     try:
         return bool(checker())
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
 
@@ -43,7 +43,7 @@ def _cuda_is_available(torch_module: Any) -> bool:
         return False
     try:
         return bool(checker())
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
 

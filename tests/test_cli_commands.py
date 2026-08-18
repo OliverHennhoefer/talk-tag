@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -511,6 +511,7 @@ def test_cli_module_entrypoint_executes_main() -> None:
     )
     result = subprocess.run(
         [sys.executable, "-m", "talk_tag.cli", "--help"],
+        check=False,
         text=True,
         capture_output=True,
         env=env,

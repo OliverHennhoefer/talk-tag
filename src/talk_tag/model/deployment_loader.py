@@ -26,7 +26,7 @@ def load_chat_tokens() -> list[str]:
     )
     raw = loads(payload)
     if not isinstance(raw, list):
-        raise ValueError("chat_tokens.json must contain a JSON list of token strings.")
+        raise TypeError("chat_tokens.json must contain a JSON list of token strings.")
     tokens: list[str] = []
     for item in raw:
         if item is None:
@@ -60,7 +60,7 @@ def load_deployment_model(
         ) from exc
 
     # 1) Load base model.
-    model = AutoModelForCausalLM.from_pretrained(
+    model: Any = AutoModelForCausalLM.from_pretrained(
         BASE_MODEL_REPO_ID,
         token=hf_token,
         cache_dir=cache_dir_str,

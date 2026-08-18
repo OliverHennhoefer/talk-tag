@@ -6,10 +6,10 @@ from talk_tag.inference import (
 )
 
 __all__ = [
-    "annotate_path",
-    "pull_model",
-    "StartupContext",
     "InferenceConfig",
+    "StartupContext",
     "TalkTagInference",
+    "annotate_path",
     "build_deployment_prompt",
+    "pull_model",
 ]

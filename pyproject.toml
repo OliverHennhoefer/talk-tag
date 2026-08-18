@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "talk-tag"
-version = "0.4.0"
+version = "0.5.0"
 description = "LLM-powered TalkBank CHAT annotator for speaker-targeted morphosyntactic transcript correction"
 readme = "README.md"
 authors = [
@@ -41,6 +41,7 @@ dependencies = [
 
 [project.optional-dependencies]
 runtime = [
+    "bitsandbytes>=0.46.1",
     "numpy>=2.0.0",
     "peft>=0.12.0",
     "torch>=2.7.0",
@@ -67,6 +68,7 @@ Issues = "https://github.com/OliverHennhoefer/talk-tag/issues"
 Documentation = "https://oliverhennhoefer.github.io/talk-tag/"
 Changelog = "https://github.com/OliverHennhoefer/talk-tag/blob/main/CHANGELOG.md"
 Security = "https://github.com/OliverHennhoefer/talk-tag/security/policy"
+"Author: Shamira Venturini" = "https://github.com/shamira-venturini"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -103,5 +105,6 @@ src = ["src", "tests"]
 python_version = "3.10"
 files = ["src/talk_tag"]
 ignore_missing_imports = true
+follow_imports = "skip"
 warn_unused_configs = true
 check_untyped_defs = true

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from difflib import SequenceMatcher
-from typing import Sequence
 
 from talk_tag.models import Annotation
 
